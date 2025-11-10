@@ -12,7 +12,7 @@
       %tr
         %th= check_box_tag "toggle_problems_checkboxes"
         - if on_page_that_can_include_multiple_different_apps
-          %th= link_for_sort t('.app')
+          %th= link_for_sort t('.app'), 'app'
         - else
           %th= link_for_sort t('.env'), 'environment'
         %th= link_for_sort t('.what_&_where').html_safe, "message"
