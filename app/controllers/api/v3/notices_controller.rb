@@ -46,11 +46,12 @@ private
   end
 
   def validate_errors!(errors)
-    return if errors.blank?
-
-    errors.each_with_index do |error, index|
-      missing_fields = ['message', 'backtrace'].select { |field| error[field].blank? }
-      raise AirbrakeApi::ParamsError, "Error at index #{index}: Missing fields #{missing_fields.join(", ")}" unless missing_fields.empty?
+    errors.each do |error|
+      if error["message"].blank?
+        error["message"] = "Error missing message"
+      elsif error["backtrace"].blank?
+        error["backtrace"] = "Error missing backtrace"
+      end
     end
   end
 
