@@ -215,6 +215,7 @@ class ErrorReport
 private
 
   # Our DB size is limited, so we need to compress / trim old notices to keep the DB size down.
+  # Basically just delete a bunch of the extra likely-duplicate notices and backtraces
   def compress_old_notices
     if notices_count > MAX_RECENT_NOTICES
       # Get notices to keep (MAX_RECENT_NOTICES most recent)
