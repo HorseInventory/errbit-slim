@@ -21,11 +21,13 @@ class Api::V3::NoticesController < ApplicationController
     report.generate_notice!
     render(status: :created, json: { id: report.notice.id, url: report.problem.url })
   rescue AirbrakeApi::ParamsError => e
+    Rails.logger.error(e.pretty_inspect)
     Rails.logger.error(e.backtrace.join("\n"))
-    render(json: { error: 'Invalid request', details: e.message }, status: :bad_request)
+    render(json: { error: 'Invalid request', details: e.pretty_inspect }, status: :bad_request)
   rescue StandardError => e
+    Rails.logger.error(e.pretty_inspect)
     Rails.logger.error(e.backtrace.join("\n"))
-    render(json: { error: 'Unexpected server error', details: e.message }, status: :internal_server_error)
+    render(json: { error: 'Unexpected server error', details: e.pretty_inspect }, status: :internal_server_error)
   end
 
 private
