@@ -1,30 +1,4 @@
-GUID_PATTERN    = /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/
-DOMAIN_PATTERN  = /\b[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+\b/
-IP_PATTERN      = /\b(?:\d{1,3}\.){3}\d{1,3}\b/
-INTEGER_PATTERN = /\b\d+\b/
-EMAIL_PATTERN   = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/
-PHONE_PATTERN   = /\b\(?[1-9]\d{2}\)?[ \-\.]?[1-9]\d{2}[ \-\.]?\d{4}\b/
-DATE_PATTERN    = /\b\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?\b/
-URL_PATTERN     = %r{\bhttps?://[^\s]+\b}
-FILE_PATH_PATTERN = %r{/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\b}
-MAC_ADDRESS_PATTERN = /\b[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}\b/
-HASH_PATTERN = /\b[0-9a-fA-F]{7,64}\b/
-QUOTED_STRING_PATTERN = /"[^"]*"|'[^']*'/
-
-VARIABLE_REGEX = Regexp.union(
-  GUID_PATTERN,
-  DOMAIN_PATTERN,
-  IP_PATTERN,
-  INTEGER_PATTERN,
-  EMAIL_PATTERN,
-  PHONE_PATTERN,
-  DATE_PATTERN,
-  URL_PATTERN,
-  FILE_PATH_PATTERN,
-  MAC_ADDRESS_PATTERN,
-  HASH_PATTERN,
-  QUOTED_STRING_PATTERN,
-)
+include PatternMatching
 
 ##
 # Processes a new error report.
@@ -162,42 +136,26 @@ class ErrorReport
 
       # Decide which pattern to insert for this match
       result << case variable_text
-      when GUID_PATTERN
-        # Insert unescaped GUID pattern
-        '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
-      when URL_PATTERN
-        # Insert unescaped URL pattern
-        'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
-      when DOMAIN_PATTERN
-        # Insert unescaped domain pattern
-        '[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+'
-      when IP_PATTERN
-        # Insert unescaped IP pattern
-        '(?:\d{1,3}\.){3}\d{1,3}'
-      when INTEGER_PATTERN
-        # Insert unescaped integer pattern
-        '\d+'
-      when EMAIL_PATTERN
-        # Insert unescaped email pattern
-        '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
-      when PHONE_PATTERN
-        # Insert unescaped phone pattern
-        '\(?[2-9]\d{2}\)?[ \-\.]?[2-9]\d{2}[ \-\.]?\d{4}'
-      when DATE_PATTERN
-        # Insert unescaped date pattern
-        '\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?'
-      when FILE_PATH_PATTERN
-        # Insert unescaped file path pattern
-        '\/(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+'
-      when MAC_ADDRESS_PATTERN
-        # Insert unescaped MAC address pattern
-        '[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}'
-      when HASH_PATTERN
-        # Insert unescaped hash pattern
-        '[0-9a-fA-F]{7,64}'
-      when QUOTED_STRING_PATTERN
-        # Insert unescaped quoted string pattern
-        '"[^"]*"|\'[^\']*\''
+      when Regexp.new(GUID_PATTERN)
+        GUID_PATTERN
+      when Regexp.new(URL_PATTERN)
+        URL_PATTERN
+      when Regexp.new(DOMAIN_PATTERN)
+        DOMAIN_PATTERN
+      when Regexp.new(IP_PATTERN)
+        IP_PATTERN
+      when Regexp.new(INTEGER_PATTERN)
+        INTEGER_PATTERN
+      when Regexp.new(DATE_PATTERN)
+        DATE_PATTERN
+      when Regexp.new(FILE_PATH_PATTERN)
+        FILE_PATH_PATTERN
+      when Regexp.new(MAC_ADDRESS_PATTERN)
+        MAC_ADDRESS_PATTERN
+      when Regexp.new(HASH_PATTERN)
+        HASH_PATTERN
+      when Regexp.new(QUOTED_STRING_PATTERN)
+        QUOTED_STRING_PATTERN
       else
         # Fallback: if for some reason we matched something else, just escape it
         Regexp.escape(variable_text)

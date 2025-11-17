@@ -238,10 +238,272 @@ describe ErrorReport do
 
     it "should return a minimal number of unique regexes" do
       unique_regexes = similar_notice_messages.map do |message|
-        ErrorReport.text_to_regex_string(message).gsub("\\", "")
+        ErrorReport.text_to_regex_string(message).delete("\\")
       end.uniq
 
-      expect(unique_regexes.size).to be <= 25
+      expect(unique_regexes.size).to(be <= 25)
+    end
+
+    context "when handling quoted strings with patterns inside" do
+      let(:message_with_guid) do
+        '{"error_reference":"If you report this error, please include this id: e511a292-4c3b-45ac-a18e-2d678328be75-1763152708."}'
+      end
+
+      let(:message_with_simple_strings) do
+        '{"code":"INVALID_INVENTORY_ITEM", "field":["input", "quantities", "0", "inventoryItemId"], "message":"The specified inventory item could not be found."}'
+      end
+
+      it "produces different regex patterns for messages with different structures" do
+        regex1 = ErrorReport.text_to_regex_string(message_with_guid)
+        regex2 = ErrorReport.text_to_regex_string(message_with_simple_strings)
+
+        expect(regex1).not_to(eq(regex2))
+      end
+
+      it "does not match unrelated messages" do
+        regex1 = ErrorReport.text_to_regex_string(message_with_guid)
+        regex2 = ErrorReport.text_to_regex_string(message_with_simple_strings)
+
+        expect(message_with_guid).not_to(match(/\A#{regex2}\z/i))
+        expect(message_with_simple_strings).not_to(match(/\A#{regex1}\z/i))
+      end
+
+      it "matches messages with same structure but different variable values" do
+        regex1 = ErrorReport.text_to_regex_string(message_with_guid)
+
+        similar_message = '{"error_reference":"If you report this error, please include this id: a1b2c3d4-5678-90ab-cdef-1234567890ab-9876543210."}'
+
+        expect(similar_message).to(match(/\A#{regex1}\z/i))
+      end
+
+      it "matches messages with simple strings that have same structure" do
+        regex2 = ErrorReport.text_to_regex_string(message_with_simple_strings)
+
+        similar_message = '{"code":"ANOTHER_ERROR_CODE", "field":["other", "path", "1", "someId"], "message":"A different error message."}'
+
+        expect(similar_message).to(match(/\A#{regex2}\z/i))
+      end
+
+      it "preserves pattern structure inside quoted strings" do
+        message = '{"id":"f47ac10b-58cc-4372-a567-0e02b2c3d479"}'
+        regex = ErrorReport.text_to_regex_string(message)
+
+        expect(regex).to(include('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'))
+
+        different_guid_message = '{"id":"a1b2c3d4-1234-5678-90ab-abcdef123456"}'
+        expect(different_guid_message).to(match(/\A#{regex}\z/i))
+
+        different_structure_message = '{"id":"just-a-string"}'
+        expect(different_structure_message).not_to(match(/\A#{regex}\z/i))
+      end
+    end
+
+    context "DB integration tests" do
+      let(:problem) { Fabricate(:problem, app: app) }
+
+      it "finds notices with GUIDs correctly" do
+        notice1 = Fabricate(:notice, message: 'ID: 550e8400-e29b-41d4-a716-446655440000', problem: problem)
+        notice2 = Fabricate(:notice, message: 'ID: a1b2c3d4-5678-90ab-cdef-123456789012', problem: problem)
+        other_notice = Fabricate(:notice, message: 'ID: simple-string', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with email addresses correctly" do
+        notice1 = Fabricate(:notice, message: 'Contact: user@example.com', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Contact: admin@test.org', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Contact: not-an-email', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with URLs correctly" do
+        notice1 = Fabricate(:notice, message: 'Visit: https://example.com/path', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Visit: http://test.org/other', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Visit: not-a-url', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with IP addresses correctly" do
+        notice1 = Fabricate(:notice, message: 'Server: 192.168.1.1', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Server: 10.0.0.1', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Server: not-an-ip', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with domains correctly" do
+        notice1 = Fabricate(:notice, message: 'Host: example.com', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Host: test.org', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Host: not-a-domain', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with phone numbers correctly" do
+        notice1 = Fabricate(:notice, message: 'Call: 555-123-4567', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Call: 123-456-7890', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Call: not-a-phone', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with dates correctly" do
+        notice1 = Fabricate(:notice, message: 'Date: 2025-11-17', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Date: 2024-01-01', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Date: not-a-date', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with MAC addresses correctly" do
+        notice1 = Fabricate(:notice, message: 'MAC: 00:1B:44:11:3A:B7', problem: problem)
+        notice2 = Fabricate(:notice, message: 'MAC: aa:bb:cc:dd:ee:ff', problem: problem)
+        other_notice = Fabricate(:notice, message: 'MAC: not-a-mac', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with hashes correctly" do
+        notice1 = Fabricate(:notice, message: 'Commit: 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Commit: abcdef1234567890abcdef1234567890', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Commit: short', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with file paths correctly" do
+        notice1 = Fabricate(:notice, message: 'File: /usr/local/bin/script', problem: problem)
+        notice2 = Fabricate(:notice, message: 'File: /home/user/file.txt', problem: problem)
+        other_notice = Fabricate(:notice, message: 'File: not-a-path', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with integers correctly" do
+        notice1 = Fabricate(:notice, message: 'Error on line 42 with count 100', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Error on line 99 with count 999', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Error on line with count', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with quoted strings containing patterns correctly" do
+        notice1 = Fabricate(:notice, message: '{"id":"f47ac10b-58cc-4372-a567-0e02b2c3d479"}', problem: problem)
+        notice2 = Fabricate(:notice, message: '{"id":"a1b2c3d4-1234-5678-90ab-abcdef123456"}', problem: problem)
+        other_notice = Fabricate(:notice, message: '{"id":"just-a-string"}', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "finds notices with simple quoted strings correctly" do
+        notice1 = Fabricate(:notice, message: '{"code":"INVALID_INVENTORY_ITEM"}', problem: problem)
+        notice2 = Fabricate(:notice, message: '{"code":"ANOTHER_ERROR_CODE"}', problem: problem)
+        other_notice = Fabricate(:notice, message: 'code: NO_QUOTES', problem: problem)
+
+        regex = ErrorReport.text_to_regex_string(notice1.message)
+        found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+
+        expect(found).to(include(notice1.id))
+        expect(found).to(include(notice2.id))
+        expect(found).not_to(include(other_notice.id))
+      end
+
+      it "separates notices with different quoted string structures" do
+        notice_with_guid = Fabricate(:notice, message: '{"error_reference":"If you report this error, please include this id: e511a292-4c3b-45ac-a18e-2d678328be75-1763152708."}', problem: problem)
+        notice_with_simple = Fabricate(:notice, message: '{"code":"INVALID_INVENTORY_ITEM", "field":["input", "quantities", "0", "inventoryItemId"], "message":"The specified inventory item could not be found."}', problem: problem)
+
+        regex_for_guid = ErrorReport.text_to_regex_string(notice_with_guid.message)
+        regex_for_simple = ErrorReport.text_to_regex_string(notice_with_simple.message)
+
+        found_by_guid_regex = Notice.where(message: /\A#{regex_for_guid}\z/i).pluck(:id)
+        found_by_simple_regex = Notice.where(message: /\A#{regex_for_simple}\z/i).pluck(:id)
+
+        expect(found_by_guid_regex).to(include(notice_with_guid.id))
+        expect(found_by_guid_regex).not_to(include(notice_with_simple.id))
+
+        expect(found_by_simple_regex).to(include(notice_with_simple.id))
+        expect(found_by_simple_regex).not_to(include(notice_with_guid.id))
+      end
+
+      it "verifies consistency between deduplicated_message and text_to_regex_string" do
+        messages = [
+          'Error with GUID: 550e8400-e29b-41d4-a716-446655440000',
+          'Error with email: user@example.com',
+          'Error with URL: https://example.com/path',
+          'Error with IP: 192.168.1.1',
+          'Error on line 42',
+        ]
+
+        messages.each do |msg|
+          notice = Fabricate(:notice, message: msg, problem: problem)
+          regex = ErrorReport.text_to_regex_string(notice.message)
+
+          found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)
+          expect(found).to(include(notice.id))
+        end
+      end
     end
   end
 end

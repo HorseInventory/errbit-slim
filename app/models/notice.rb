@@ -138,30 +138,7 @@ class Notice
   delegate :app, to: :problem
 
   def deduplicated_message
-    self.class.deduplicated_message(message)
-  end
-
-  # Used for nicely displaying the message in the UI
-  def self.deduplicated_message(message)
-    message.gsub(GUID_PATTERN, '<GUID>').
-      gsub(EMAIL_PATTERN, '<EMAIL>').
-      gsub(URL_PATTERN, '<URL>').
-      gsub(FILE_PATH_PATTERN, '<FILE_PATH>').
-      gsub(MAC_ADDRESS_PATTERN, '<MAC_ADDRESS>').
-      gsub(HASH_PATTERN, '<HASH>').
-      gsub(DATE_PATTERN, '<DATE>').
-      gsub(PHONE_PATTERN, '<PHONE>').
-      gsub(IP_PATTERN, '<IP>').
-      gsub(DOMAIN_PATTERN, '<DOMAIN>').
-      gsub(INTEGER_PATTERN, '<INTEGER>').
-      gsub(quoted_string_pattern_omit_others, '<QUOTED_STRING>')
-  end
-
-  def self.quoted_string_pattern_omit_others
-    # Match quoted strings that either:
-    # 1. Don't contain any <PATTERN> tags, OR
-    # 2. Contain only a single <PATTERN> tag and nothing else
-    /"(?:(?!<[A-Z_]+>)[^"])*"|'(?:(?!<[A-Z_]+>)[^'])*'|"<[A-Z_]+>"|'<[A-Z_]+>'/
+    PatternMatching.deduplicated_message(message)
   end
 
   def ensure_fingerprint
