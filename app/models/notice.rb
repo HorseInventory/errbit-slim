@@ -138,12 +138,19 @@ class Notice
   delegate :app, to: :problem
 
   def deduplicated_message
+    self.class.deduplicated_message(message)
+  end
+
+  # Used for nicely displaying the message in the UI
+  def self.deduplicated_message(message)
     message.gsub(
       GUID_PATTERN, '<GUID>'
     ).gsub(
       DOMAIN_PATTERN, '<DOMAIN>'
     ).gsub(
       IP_PATTERN, '<IP>'
+    ).gsub(
+      quoted_string_pattern_omit_others, '<QUOTED_STRING>'
     ).gsub(
       INTEGER_PATTERN, '<INTEGER>'
     ).gsub(
@@ -160,8 +167,6 @@ class Notice
       MAC_ADDRESS_PATTERN, '<MAC_ADDRESS>'
     ).gsub(
       HASH_PATTERN, '<HASH>'
-    ).gsub(
-      self.class.quoted_string_pattern_omit_others, '<QUOTED_STRING>'
     )
   end
 

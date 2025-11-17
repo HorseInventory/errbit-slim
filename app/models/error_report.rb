@@ -23,7 +23,7 @@ VARIABLE_REGEX = Regexp.union(
   FILE_PATH_PATTERN,
   MAC_ADDRESS_PATTERN,
   HASH_PATTERN,
-  QUOTED_STRING_PATTERN
+  QUOTED_STRING_PATTERN,
 )
 
 ##
@@ -145,6 +145,7 @@ class ErrorReport
     ).order(created_at: :asc)
   end
 
+  # Used for finding similar Notices in the DB
   def self.text_to_regex_string(input_str)
     result = +"" # mutable string
     last_pos = 0
