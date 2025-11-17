@@ -155,4 +155,170 @@ describe Notice, type: 'model' do
       expect(notice.env_vars).to(eq({}))
     end
   end
+
+  describe '.deduplicated_message' do
+    context 'quoted strings' do
+      it 'replaces integer strings within arrays correctly' do
+        message = '{"field"=>["0", "inventoryItemId"]}'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('{<QUOTED_STRING>=>[<QUOTED_STRING>, <QUOTED_STRING>]}'))
+      end
+
+      it 'handles the complex case from the bug report' do
+        message = '{"code"=>"INVALID_INVENTORY_ITEM", "field"=>["input", "quantities", "0", "inventoryItemId"], "message"=>"The specified inventory item could not be found."}'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('{<QUOTED_STRING>=><QUOTED_STRING>, <QUOTED_STRING>=>[<QUOTED_STRING>, <QUOTED_STRING>, <QUOTED_STRING>, <QUOTED_STRING>], <QUOTED_STRING>=><QUOTED_STRING>}'))
+      end
+
+      it 'does not replace quoted strings containing GUIDs' do
+        message = 'I said to him: "Foo bar baz f0643b9e-b1c2-4db3-8a95-7b47c4b6e0b2."'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('I said to him: "Foo bar baz <GUID>."'))
+      end
+
+      it 'replaces quoted strings without patterns' do
+        message = 'I said to him: "Foo bar baz."'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('I said to him: <QUOTED_STRING>'))
+      end
+
+      it 'does not apply INTEGER pattern inside quoted strings' do
+        message = '{"id":"123"}'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('{<QUOTED_STRING>:<QUOTED_STRING>}'))
+      end
+
+      it 'applies complex patterns like EMAIL inside quoted strings' do
+        message = 'User: "Contact user@example.com for help"'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('User: "Contact <EMAIL> for help"'))
+      end
+
+      it 'applies complex patterns like URL inside quoted strings' do
+        message = 'Link: "Visit https://example.com for more"'
+        result = Notice.deduplicated_message(message)
+        expect(result).to(eq('Link: "Visit <URL> for more"'))
+      end
+    end
+
+    it 'replaces regular integers outside of quotes' do
+      message = 'Error on line 42 with count 100'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Error on line <INTEGER> with count <INTEGER>'))
+    end
+
+    it 'handles mixed quoted and unquoted integers' do
+      message = 'Count: 5, ID: "123", Name: "Product"'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Count: <INTEGER>, ID: <QUOTED_STRING>, Name: <QUOTED_STRING>'))
+    end
+
+    it 'handles multiple integer strings in arrays' do
+      message = '["0", "1", "2", "3"]'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('[<QUOTED_STRING>, <QUOTED_STRING>, <QUOTED_STRING>, <QUOTED_STRING>]'))
+    end
+
+    it 'replaces GUIDs correctly' do
+      message = 'ID: 550e8400-e29b-41d4-a716-446655440000'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('ID: <GUID>'))
+    end
+
+    it 'replaces email addresses correctly' do
+      message = 'Contact: user@example.com'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Contact: <EMAIL>'))
+    end
+
+    it 'replaces IP addresses correctly' do
+      message = 'Server: 192.168.1.1'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Server: <IP>'))
+    end
+
+    it 'replaces domains correctly' do
+      message = 'Host: example.com'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Host: <DOMAIN>'))
+    end
+
+    it 'replaces URLs correctly' do
+      message = 'Visit: https://example.com/path'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Visit: <URL>'))
+    end
+
+    it 'replaces file paths correctly' do
+      message = 'File: /usr/local/bin/script'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('File: <FILE_PATH>'))
+    end
+
+    it 'replaces phone numbers correctly' do
+      message = 'Call: 555-123-4567'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Call: <PHONE>'))
+    end
+
+    it 'replaces dates correctly' do
+      message = 'Date: 2025-11-17'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Date: <DATE>'))
+    end
+
+    it 'replaces MAC addresses correctly' do
+      message = 'MAC: 00:1B:44:11:3A:B7'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('MAC: <MAC_ADDRESS>'))
+    end
+
+    it 'replaces hashes correctly' do
+      message = 'Commit: 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Commit: <HASH>'))
+    end
+
+    it 'handles multiple patterns in one message' do
+      message = 'Error at 192.168.1.1:8080 for user@example.com on 2025-11-17 with ID 12345'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Error at <IP>:<INTEGER> for <EMAIL> on <DATE> with ID <INTEGER>'))
+    end
+
+    it 'preserves already replaced patterns' do
+      message = 'Already has <GUID> and should keep it with "new string"'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Already has <GUID> and should keep it with <QUOTED_STRING>'))
+    end
+
+    it 'handles single quoted strings' do
+      message = "{'key'=>'value', 'number'=>'42'}"
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq("{<QUOTED_STRING>=><QUOTED_STRING>, <QUOTED_STRING>=><QUOTED_STRING>}"))
+    end
+
+    it 'handles empty strings' do
+      message = '""'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('<QUOTED_STRING>'))
+    end
+
+    it 'handles strings with special characters' do
+      message = '{"path":"C:\\Windows\\System32", "message":"Error: File not found"}'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('{<QUOTED_STRING>:<QUOTED_STRING>, <QUOTED_STRING>:<QUOTED_STRING>}'))
+    end
+
+    it 'handles integers within quoted strings' do
+      message = 'I said: "Hello 123"'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('I said: "Hello <INTEGER>"'))
+    end
+
+    it 'URL with integers' do
+      message = 'Visit: https://example.com/path/123'
+      result = Notice.deduplicated_message(message)
+      expect(result).to(eq('Visit: <URL>'))
+    end
+  end
 end

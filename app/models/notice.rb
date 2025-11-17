@@ -143,35 +143,25 @@ class Notice
 
   # Used for nicely displaying the message in the UI
   def self.deduplicated_message(message)
-    message.gsub(
-      GUID_PATTERN, '<GUID>'
-    ).gsub(
-      DOMAIN_PATTERN, '<DOMAIN>'
-    ).gsub(
-      IP_PATTERN, '<IP>'
-    ).gsub(
-      quoted_string_pattern_omit_others, '<QUOTED_STRING>'
-    ).gsub(
-      INTEGER_PATTERN, '<INTEGER>'
-    ).gsub(
-      EMAIL_PATTERN, '<EMAIL>'
-    ).gsub(
-      PHONE_PATTERN, '<PHONE>'
-    ).gsub(
-      DATE_PATTERN, '<DATE>'
-    ).gsub(
-      URL_PATTERN, '<URL>'
-    ).gsub(
-      FILE_PATH_PATTERN, '<FILE_PATH>'
-    ).gsub(
-      MAC_ADDRESS_PATTERN, '<MAC_ADDRESS>'
-    ).gsub(
-      HASH_PATTERN, '<HASH>'
-    )
+    message.gsub(GUID_PATTERN, '<GUID>').
+      gsub(EMAIL_PATTERN, '<EMAIL>').
+      gsub(URL_PATTERN, '<URL>').
+      gsub(FILE_PATH_PATTERN, '<FILE_PATH>').
+      gsub(MAC_ADDRESS_PATTERN, '<MAC_ADDRESS>').
+      gsub(HASH_PATTERN, '<HASH>').
+      gsub(DATE_PATTERN, '<DATE>').
+      gsub(PHONE_PATTERN, '<PHONE>').
+      gsub(IP_PATTERN, '<IP>').
+      gsub(DOMAIN_PATTERN, '<DOMAIN>').
+      gsub(INTEGER_PATTERN, '<INTEGER>').
+      gsub(quoted_string_pattern_omit_others, '<QUOTED_STRING>')
   end
 
   def self.quoted_string_pattern_omit_others
-    /"(?:(?!<[A-Z_]+>)[^"])*"|'(?:(?!<[A-Z_]+>)[^'])*'/
+    # Match quoted strings that either:
+    # 1. Don't contain any <PATTERN> tags, OR
+    # 2. Contain only a single <PATTERN> tag and nothing else
+    /"(?:(?!<[A-Z_]+>)[^"])*"|'(?:(?!<[A-Z_]+>)[^'])*'|"<[A-Z_]+>"|'<[A-Z_]+>'/
   end
 
   def ensure_fingerprint
