@@ -108,7 +108,7 @@ class ErrorReport
 
   def find_similar_problems(notice)
     problem_ids = Notice.where(
-      message: /\A#{self.class.text_to_regex_string(notice.message)}\z/i,
+      message: /\A#{PatternMatching.text_to_regex_string(notice.message)}\z/i,
     ).pluck(:problem_id)
 
     return [] if problem_ids.empty?
@@ -117,58 +117,6 @@ class ErrorReport
       app_id: app.id,
       :_id.in => problem_ids,
     ).order(created_at: :asc)
-  end
-
-  # Used for finding similar Notices in the DB
-  def self.text_to_regex_string(input_str)
-    result = +"" # mutable string
-    last_pos = 0
-
-    input_str.scan(VARIABLE_REGEX) do
-      match = Regexp.last_match
-      match_start = match.begin(0)
-      match_end   = match.end(0)
-      variable_text = match[0]
-
-      # Add the literal (escaped) text up to the start of this match
-      literal_text = input_str[last_pos...match_start]
-      result << Regexp.escape(literal_text)
-
-      # Decide which pattern to insert for this match
-      result << case variable_text
-      when Regexp.new(GUID_PATTERN)
-        GUID_PATTERN
-      when Regexp.new(URL_PATTERN)
-        URL_PATTERN
-      when Regexp.new(DOMAIN_PATTERN)
-        DOMAIN_PATTERN
-      when Regexp.new(IP_PATTERN)
-        IP_PATTERN
-      when Regexp.new(INTEGER_PATTERN)
-        INTEGER_PATTERN
-      when Regexp.new(DATE_PATTERN)
-        DATE_PATTERN
-      when Regexp.new(FILE_PATH_PATTERN)
-        FILE_PATH_PATTERN
-      when Regexp.new(MAC_ADDRESS_PATTERN)
-        MAC_ADDRESS_PATTERN
-      when Regexp.new(HASH_PATTERN)
-        HASH_PATTERN
-      when Regexp.new(QUOTED_STRING_PATTERN)
-        QUOTED_STRING_PATTERN
-      else
-        # Fallback: if for some reason we matched something else, just escape it
-        Regexp.escape(variable_text)
-      end
-
-      last_pos = match_end
-    end
-
-    # Add any leftover text after the final match
-    leftover = input_str[last_pos..-1]
-    result << Regexp.escape(leftover) if leftover
-
-    result
   end
 
 private
