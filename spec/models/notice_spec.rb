@@ -332,7 +332,13 @@ describe Notice, type: 'model' do
     it 'handles empty strings' do
       message = '""'
       result = PatternMatching.deduplicated_message(message)
-      expect(result).to(eq('<QUOTED_STRING>'))
+      expect(result).to(eq(''))
+    end
+
+    it 'handles empty messages' do
+      message = ''
+      result = PatternMatching.deduplicated_message(message)
+      expect(result).to(eq(''))
     end
 
     it 'handles strings with special characters' do
