@@ -11,6 +11,9 @@ module PatternMatching
   DOMAIN_PATTERN = '[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+'
   INTEGER_PATTERN = '\d+'
   QUOTED_STRING_PATTERN = '"[^"]*"|\'[^\']*\''
+  LEADING_MESSAGE_PREFIXES = [
+    'uncaught throw ',
+  ]
 
   PATTERN_CONSTANTS = [
     GUID_PATTERN,
@@ -117,6 +120,8 @@ module PatternMatching
 
   # Used for nicely displaying the message in the UI
   def self.deduplicated_message(message)
+    message = normalize_message_for_dedup(message)
+
     # First pass: replace patterns outside of quoted strings (with word boundaries)
     result = message.gsub(PATTERN_REGEXES[0], '<GUID>').
       gsub(PATTERN_REGEXES[1], '<EMAIL>').
@@ -159,6 +164,27 @@ module PatternMatching
         '<QUOTED_STRING>'
       end
     end
+  end
+
+  def self.normalize_message_for_dedup(message)
+    normalized = message.to_s
+
+    LEADING_MESSAGE_PREFIXES.each do |prefix|
+      normalized = normalized.delete_prefix(prefix)
+    end
+
+    unwrap_fully_quoted_message(normalized)
+  end
+
+  def self.unwrap_fully_quoted_message(message)
+    return message if message.length < 2
+
+    first_char = message[0]
+    last_char = message[-1]
+
+    return message unless first_char == last_char && ["'", '"'].include?(first_char)
+
+    message[1..-2]
   end
 
   def self.quoted_string_pattern_omit_others

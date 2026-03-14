@@ -157,11 +157,37 @@ describe Notice, type: 'model' do
   end
 
   describe '.deduplicated_message' do
+    context 'message pre-normalization' do
+      it 'strips uncaught throw prefix then unwraps fully quoted messages' do
+        message = 'uncaught throw "Shopify API order ID is nil for fulfillment order"'
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq('Shopify API order ID is nil for fulfillment order'))
+      end
+
+      it 'unwraps fully single-quoted messages after prefix stripping' do
+        message = "uncaught throw 'Shopify API order ID is nil for fulfillment order'"
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq('Shopify API order ID is nil for fulfillment order'))
+      end
+
+      it 'does not strip uncaught throw when not at the start' do
+        message = 'RuntimeError: uncaught throw "Shopify API order ID is nil for fulfillment order"'
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq('RuntimeError: uncaught throw <QUOTED_STRING>'))
+      end
+
+      it 'only unwraps when the whole message is quoted' do
+        message = 'uncaught throw Prefix: "Shopify API order ID is nil for fulfillment order"'
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq('Prefix: <QUOTED_STRING>'))
+      end
+    end
+
     context 'quoted strings' do
-      it 'preserves quoted text structure for Shopify fulfillment order IDs' do
+      it 'normalizes uncaught throw messages before replacing patterns' do
         message = 'uncaught throw "Shopify API order ID is nil for fulfillment order 5767884275806"'
         result = PatternMatching.deduplicated_message(message)
-        expect(result).to(eq('uncaught throw "Shopify API order ID is nil for fulfillment order <INTEGER>"'))
+        expect(result).to(eq('Shopify API order ID is nil for fulfillment order <INTEGER>'))
       end
 
       it 'replaces integer strings within arrays correctly' do
