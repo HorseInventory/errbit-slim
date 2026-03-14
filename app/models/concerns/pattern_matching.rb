@@ -2,7 +2,7 @@ module PatternMatching
   GUID_PATTERN = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
   EMAIL_PATTERN = '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
   URL_PATTERN = 'https?://[^\s]+'
-  FILE_PATH_PATTERN = '(\/[A-Za-z0-9._]+)+'
+  FILE_PATH_PATTERN = '(?:[A-Za-z]:\\\\(?:[A-Za-z0-9._-]+\\\\)*[A-Za-z0-9._-]+|(?:\/[A-Za-z0-9._-]+)+)'
   MAC_ADDRESS_PATTERN = '[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}'
   HASH_PATTERN = '[0-9a-fA-F]{7,64}'
   DATE_PATTERN = '\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?'
@@ -123,12 +123,12 @@ module PatternMatching
       gsub(PATTERN_REGEXES[2], '<URL>').
       gsub(PATTERN_REGEXES[3], '<FILE_PATH>').
       gsub(PATTERN_REGEXES[4], '<MAC_ADDRESS>').
-      gsub(PATTERN_REGEXES[5], '<HASH>').
       gsub(PATTERN_REGEXES[6], '<DATE>').
       gsub(PATTERN_REGEXES[7], '<PHONE>').
       gsub(PATTERN_REGEXES[8], '<IP>').
       gsub(PATTERN_REGEXES[9], '<DOMAIN>').
-      gsub(PATTERN_REGEXES[10], '<INTEGER>')
+      gsub(PATTERN_REGEXES[10], '<INTEGER>').
+      gsub(PATTERN_REGEXES[5], '<HASH>')
 
     # Second pass: process quoted strings (without word boundaries for patterns)
     result.gsub(/#{QUOTED_STRING_PATTERN}/) do |matched_string|
@@ -138,12 +138,13 @@ module PatternMatching
       # Check if already has replaced patterns from first pass
       has_replaced_patterns = content.match?(/<[A-Z_]+>/)
 
-      # Replace patterns inside without word boundaries (excluding INTEGER per existing tests)
+      # Replace patterns inside quoted strings without word boundaries.
       processed_content = content.
         gsub(/#{GUID_PATTERN}/, '<GUID>').
         gsub(/#{EMAIL_PATTERN}/, '<EMAIL>').
         gsub(/#{URL_PATTERN}/, '<URL>').
         gsub(/#{MAC_ADDRESS_PATTERN}/, '<MAC_ADDRESS>').
+        gsub(/#{INTEGER_PATTERN}/, '<INTEGER>').
         gsub(/#{HASH_PATTERN}/, '<HASH>').
         gsub(/#{FILE_PATH_PATTERN}/, '<FILE_PATH>').
         gsub(/#{DATE_PATTERN}/, '<DATE>').
@@ -151,8 +152,8 @@ module PatternMatching
         gsub(/#{IP_PATTERN}/, '<IP>').
         gsub(/#{DOMAIN_PATTERN}/, '<DOMAIN>')
 
-      # Keep quotes visible only if patterns were found AND there's other text besides the pattern
-      if (has_replaced_patterns || processed_content != content) && processed_content !~ /\A<[A-Z_]+>\z/
+      # Keep quotes visible only if patterns were found
+      if (has_replaced_patterns || processed_content != content)
         "#{quote_char}#{processed_content}#{quote_char}"
       else
         '<QUOTED_STRING>'
