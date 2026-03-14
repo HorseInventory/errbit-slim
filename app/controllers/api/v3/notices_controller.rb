@@ -10,6 +10,10 @@ class Api::V3::NoticesController < ApplicationController
     return render(status: :ok, body: '') if request.method == 'OPTIONS'
 
     merged_params = merged_request_params
+    if merged_params['errors'].blank?
+      return render(json: { error: "Invalid request" }, status: :bad_request)
+    end
+
     validate_errors!(merged_params['errors'])
 
     report = AirbrakeApi::V3::NoticeParser.new(merged_params).report
