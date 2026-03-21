@@ -9,9 +9,12 @@ module SortHelper
     elsif current && params_order == "asc"
       # Opposite of current order
       "desc"
-    elsif field == "message" || field == "app" || field == "environment"
+    elsif field == "message" || field == "environment"
       # Alphabetical order
       "asc"
+    elsif field == "created_at"
+      # Problem created_at — newest problems first when first opening
+      "desc"
     elsif field == "last_notice_at"
       # Date order - Most recent first
       "desc"

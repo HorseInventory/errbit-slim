@@ -34,11 +34,10 @@ class Problem
   scope :in_env, ->(environment) { environment.blank? ? all : where(environment: environment) }
   scope :ordered_by, ->(sort, order) {
     case sort
-    when "app"            then ordered # order_by(["app_name", order])
     when "environment"    then order_by(["environment", order])
     when "message"        then order_by(["message", order])
-    when "last_notice_at" then all
-    when "count"          then ordered # order_by(["notices_count", order])
+    when "created_at"     then ordered
+    when "last_notice_at", "count" then all # Sorted by ProblemAggregationSorter (DB aggregation)
     else fail("\"#{sort}\" is not a recognized sort")
     end
   }

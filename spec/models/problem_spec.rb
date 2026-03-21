@@ -96,8 +96,8 @@ describe Problem, type: 'model' do
   end
 
   context "Scopes" do
-    context "ordered_by last_notice_at" do
-      it 'can be sorted and paginated manually' do
+    context "ProblemAggregationSorter" do
+      it "sorts by last_notice_at desc via aggregation (newest notice first)" do
         app = Fabricate(:app)
         problem1 = Fabricate(:problem, app: app)
         problem2 = Fabricate(:problem, app: app)
@@ -107,19 +107,56 @@ describe Problem, type: 'model' do
         Timecop.freeze(1.day.ago) { Fabricate(:notice, problem: problem2) }
         Timecop.freeze(2.days.ago) { Fabricate(:notice, problem: problem3) }
 
-        problems = Problem.for_apps(App.where(id: app.id)).to_a
-        sorted_desc = problems.sort_by do |problem|
-          timestamp = problem.last_notice_at
-          timestamp ? -timestamp.to_i : -Time.at(0).to_i
-        end
+        criteria = Problem.for_apps(App.where(id: app.id))
+        page = ProblemAggregationSorter.call(
+          criteria: criteria,
+          sort: "last_notice_at",
+          order: "desc",
+          page: 1,
+          per_page: 10,
+        )
 
-        expect(sorted_desc[0]).to(eq(problem2))
-        expect(sorted_desc[1]).to(eq(problem3))
-        expect(sorted_desc[2]).to(eq(problem1))
+        expect(page.map { |d| d.object.id }).to(eq([problem2.id, problem3.id, problem1.id]))
+      end
 
-        paginated = Kaminari.paginate_array(sorted_desc).page(1).per(2)
-        expect(paginated.size).to(eq(2))
-        expect(paginated[0]).to(eq(problem2))
+      it "sorts by notices count desc via aggregation" do
+        app = Fabricate(:app)
+        low = Fabricate(:problem, app: app)
+        high = Fabricate(:problem, app: app)
+        mid = Fabricate(:problem, app: app)
+
+        2.times { Fabricate(:notice, problem: low) }
+        5.times { Fabricate(:notice, problem: high) }
+        3.times { Fabricate(:notice, problem: mid) }
+
+        criteria = Problem.for_apps(App.where(id: app.id))
+        page = ProblemAggregationSorter.call(
+          criteria: criteria,
+          sort: "count",
+          order: "desc",
+          page: 1,
+          per_page: 10,
+        )
+
+        expect(page.map { |d| d.object.id }).to(eq([high.id, mid.id, low.id]))
+      end
+
+      it "reports total_count and limits page size" do
+        app = Fabricate(:app)
+        problems = Array.new(3) { Fabricate(:problem, app: app) }
+        problems.each { |p| Fabricate(:notice, problem: p) }
+
+        criteria = Problem.for_apps(App.where(id: app.id))
+        page = ProblemAggregationSorter.call(
+          criteria: criteria,
+          sort: "last_notice_at",
+          order: "desc",
+          page: 1,
+          per_page: 2,
+        )
+
+        expect(page.size).to(eq(2))
+        expect(page.total_count).to(eq(3))
       end
     end
 

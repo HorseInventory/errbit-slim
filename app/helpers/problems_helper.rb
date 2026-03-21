@@ -1,4 +1,18 @@
 module ProblemsHelper
+  # Aggregated sorts already return ProblemDecorator rows; other paths pass raw Problems.
+  def problems_for_table(problems)
+    list =
+      if problems.respond_to?(:to_a)
+        problems.to_a
+      else
+        Array(problems)
+      end
+    return list if list.empty?
+    return list if list.first.is_a?(ProblemDecorator)
+
+    ProblemDecorator.decorate_collection(list)
+  end
+
   def problem_confirm(action)
     t(format('problems.confirm.%s', action)) unless Errbit::Config.confirm_err_actions.eql? false
   end
