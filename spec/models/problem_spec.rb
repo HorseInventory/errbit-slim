@@ -79,6 +79,17 @@ describe Problem, type: 'model' do
       expect(problem.resolved_at.to_s).to(eq(expected_resolved_at.to_s))
     end
 
+    it "keeps only the most recent notice" do
+      problem = Fabricate(:problem)
+      old_notice = Timecop.freeze(2.days.ago) { Fabricate(:notice, problem: problem) }
+      recent_notice = Timecop.freeze(1.day.ago) { Fabricate(:notice, problem: problem) }
+
+      problem.resolve!
+
+      expect(problem.reload.notices).to(contain_exactly(recent_notice))
+      expect(Notice.where(id: old_notice.id)).to(be_empty)
+    end
+
     it "should throw an err if it's not successful" do
       problem = Fabricate(:problem)
       expect(problem).to_not(be_resolved)

@@ -92,6 +92,11 @@ class Problem
 
   def resolve!
     self.update!(resolved: true, resolved_at: Time.zone.now)
+
+    notice_ids = notices.reverse_ordered.skip(1).pluck(:id)
+    notices.where(:id.in => notice_ids).delete_all
+
+    true
   end
 
   def unresolve
