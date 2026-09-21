@@ -244,6 +244,15 @@ describe ErrorReport do
       expect(unique_regexes.size).to(be <= 25)
     end
 
+    it "preserves webhook topics while matching different refund IDs" do
+      message = 'uncaught throw "refunds/create webhook without an order_id (refund 924197519498)"'
+      regex = PatternMatching.text_to_regex_string(message)
+
+      expect(message).to(match(/\A#{regex}\z/i))
+      expect(message.sub('924197519498', '924197519499')).to(match(/\A#{regex}\z/i))
+      expect(message.sub('refunds/create', 'refunds/update')).not_to(match(/\A#{regex}\z/i))
+    end
+
     context "when handling quoted strings with patterns inside" do
       let(:message_with_guid) do
         '{"error_reference":"If you report this error, please include this id: e511a292-4c3b-45ac-a18e-2d678328be75-1763152708."}'

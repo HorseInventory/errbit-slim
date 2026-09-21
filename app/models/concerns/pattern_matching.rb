@@ -2,7 +2,7 @@ module PatternMatching
   GUID_PATTERN = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
   EMAIL_PATTERN = '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
   URL_PATTERN = 'https?://[^\s]+'
-  FILE_PATH_PATTERN = '(?:[A-Za-z]:\\\\(?:[A-Za-z0-9._-]+\\\\)*[A-Za-z0-9._-]+|(?:\/[A-Za-z0-9._-]+)+)'
+  FILE_PATH_PATTERN = '(?:[A-Za-z]:\\\\(?:[A-Za-z0-9._-]+\\\\)*[A-Za-z0-9._-]+|(?<![A-Za-z0-9._/-])(?:\/[A-Za-z0-9._-]+)+)'
   MAC_ADDRESS_PATTERN = '[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}'
   HASH_PATTERN = '[0-9a-fA-F]{7,64}'
   DATE_PATTERN = '\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?'

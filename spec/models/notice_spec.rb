@@ -287,6 +287,47 @@ describe Notice, type: 'model' do
       expect(result).to(eq('File: <FILE_PATH>'))
     end
 
+    it 'preserves webhook topics containing a slash' do
+      message = 'uncaught throw "refunds/create webhook without an order_id (refund 924197519498)"'
+      result = PatternMatching.deduplicated_message(message)
+      expect(result).to(eq('refunds/create webhook without an order_id (refund <INTEGER>)'))
+    end
+
+    it 'preserves topics containing multiple slashes' do
+      message = 'Topic: refunds/create/failed'
+      result = PatternMatching.deduplicated_message(message)
+      expect(result).to(eq(message))
+    end
+
+    ['app/models/script', './script', '../script'].each do |path|
+      it "preserves the relative path #{path}" do
+        message = "File: #{path}"
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq(message))
+      end
+    end
+
+    it 'replaces a single-component file path at the start of a message' do
+      result = PatternMatching.deduplicated_message('/etc')
+      expect(result).to(eq('<FILE_PATH>'))
+    end
+
+    ['=', '(', '[', '<', ':', ' ', "\t", "\n"].each do |separator|
+      it "replaces file paths after #{separator.inspect}" do
+        message = "File#{separator}/etc"
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq("File#{separator}<FILE_PATH>"))
+      end
+    end
+
+    ['"', "'"].each do |quote|
+      it "replaces file paths inside #{quote} quotes" do
+        message = "File: #{quote}/etc#{quote}"
+        result = PatternMatching.deduplicated_message(message)
+        expect(result).to(eq("File: #{quote}<FILE_PATH>#{quote}"))
+      end
+    end
+
     it 'replaces hyphen-separated integers individually' do
       message = 'Call: 1-514-555-5555'
       result = PatternMatching.deduplicated_message(message)
