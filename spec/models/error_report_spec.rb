@@ -366,10 +366,10 @@ describe ErrorReport do
         expect(found).not_to(include(other_notice.id))
       end
 
-      it "finds notices with phone numbers correctly" do
+      it "finds notices with hyphen-separated integers correctly" do
         notice1 = Fabricate(:notice, message: 'Call: 555-123-4567', problem: problem)
-        notice2 = Fabricate(:notice, message: 'Call: 123-456-7890', problem: problem)
-        other_notice = Fabricate(:notice, message: 'Call: not-a-phone', problem: problem)
+        notice2 = Fabricate(:notice, message: 'Call: 1-23-456', problem: problem)
+        other_notice = Fabricate(:notice, message: 'Call: not-an-integer', problem: problem)
 
         regex = PatternMatching.text_to_regex_string(notice1.message)
         found = Notice.where(message: /\A#{regex}\z/i).pluck(:id)

@@ -6,7 +6,6 @@ module PatternMatching
   MAC_ADDRESS_PATTERN = '[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}'
   HASH_PATTERN = '[0-9a-fA-F]{7,64}'
   DATE_PATTERN = '\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?'
-  PHONE_PATTERN = '\(?[1-9]\d{2}\)?[ \-\.]?[1-9]\d{2}[ \-\.]?\d{4}'
   IP_PATTERN = '(?:\d{1,3}\.){3}\d{1,3}'
   DOMAIN_PATTERN = '[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+'
   INTEGER_PATTERN = '\d+'
@@ -23,7 +22,6 @@ module PatternMatching
     MAC_ADDRESS_PATTERN,
     HASH_PATTERN,
     DATE_PATTERN,
-    PHONE_PATTERN,
     IP_PATTERN,
     DOMAIN_PATTERN,
     INTEGER_PATTERN,
@@ -38,7 +36,6 @@ module PatternMatching
     /\b#{MAC_ADDRESS_PATTERN}\b/,
     /\b#{HASH_PATTERN}\b/,
     /\b#{DATE_PATTERN}\b/,
-    /\b#{PHONE_PATTERN}\b/,
     /\b#{IP_PATTERN}\b/,
     /\b#{DOMAIN_PATTERN}\b/,
     /\b#{INTEGER_PATTERN}\b/,
@@ -129,10 +126,9 @@ module PatternMatching
       gsub(PATTERN_REGEXES[3], '<FILE_PATH>').
       gsub(PATTERN_REGEXES[4], '<MAC_ADDRESS>').
       gsub(PATTERN_REGEXES[6], '<DATE>').
-      gsub(PATTERN_REGEXES[7], '<PHONE>').
-      gsub(PATTERN_REGEXES[8], '<IP>').
-      gsub(PATTERN_REGEXES[9], '<DOMAIN>').
-      gsub(PATTERN_REGEXES[10], '<INTEGER>').
+      gsub(PATTERN_REGEXES[7], '<IP>').
+      gsub(PATTERN_REGEXES[8], '<DOMAIN>').
+      gsub(PATTERN_REGEXES[9], '<INTEGER>').
       gsub(PATTERN_REGEXES[5], '<HASH>')
 
     # Second pass: process quoted strings (without word boundaries for patterns)
@@ -153,7 +149,6 @@ module PatternMatching
         gsub(/#{HASH_PATTERN}/, '<HASH>').
         gsub(/#{FILE_PATH_PATTERN}/, '<FILE_PATH>').
         gsub(/#{DATE_PATTERN}/, '<DATE>').
-        gsub(/#{PHONE_PATTERN}/, '<PHONE>').
         gsub(/#{IP_PATTERN}/, '<IP>').
         gsub(/#{DOMAIN_PATTERN}/, '<DOMAIN>')
 

@@ -287,10 +287,22 @@ describe Notice, type: 'model' do
       expect(result).to(eq('File: <FILE_PATH>'))
     end
 
-    it 'replaces phone numbers correctly' do
-      message = 'Call: 555-123-4567'
+    it 'replaces hyphen-separated integers individually' do
+      message = 'Call: 1-514-555-5555'
       result = PatternMatching.deduplicated_message(message)
-      expect(result).to(eq('Call: <PHONE>'))
+      expect(result).to(eq('Call: <INTEGER>-<INTEGER>-<INTEGER>-<INTEGER>'))
+    end
+
+    it 'replaces ten-digit transaction IDs as integers' do
+      message = 'PG::TRDeadlockDetected: ERROR: deadlock detected DETAIL: Process 4193915 waits for ShareLock on transaction 3204097239; blocked by process 390. Process 390 waits for ShareLock on transaction 3204097251; blocked by process 4193915. HINT: See server log for query details. CONTEXT: while updating tuple (149043,34) in relation "shopify_variants"'
+      result = PatternMatching.deduplicated_message(message)
+      expect(result).to(eq('PG::TRDeadlockDetected: ERROR: deadlock detected DETAIL: Process <INTEGER> waits for ShareLock on transaction <INTEGER>; blocked by process <INTEGER>. Process <INTEGER> waits for ShareLock on transaction <INTEGER>; blocked by process <INTEGER>. HINT: See server log for query details. CONTEXT: while updating tuple (<INTEGER>,<INTEGER>) in relation <QUOTED_STRING>'))
+    end
+
+    it 'replaces a ten-digit suffix after a GUID as an integer' do
+      message = '{"error_reference":"If you report this error, please include this id: 1937a898-a5cb-4a15-babc-9832c76b486e-1789632882."}'
+      result = PatternMatching.deduplicated_message(message)
+      expect(result).to(eq('{<QUOTED_STRING>:"If you report this error, please include this id: <GUID>-<INTEGER>."}'))
     end
 
     it 'replaces dates correctly' do
@@ -353,16 +365,16 @@ describe Notice, type: 'model' do
       expect(result).to(eq('I said: "Hello <INTEGER>"'))
     end
 
-    it 'handles integers within quoted strings' do
+    it 'handles hyphen-separated integers within quoted messages' do
       message = 'I said: "Hello 514-555-5555"'
       result = PatternMatching.deduplicated_message(message)
-      expect(result).to(eq('I said: "Hello <PHONE>"'))
+      expect(result).to(eq('I said: "Hello <INTEGER>-<INTEGER>-<INTEGER>"'))
     end
 
-    it 'handles integers within quoted strings' do
+    it 'handles quoted hyphen-separated integers' do
       message = 'I said: "514-555-5555"'
       result = PatternMatching.deduplicated_message(message)
-      expect(result).to(eq('I said: "<PHONE>"'))
+      expect(result).to(eq('I said: "<INTEGER>-<INTEGER>-<INTEGER>"'))
     end
 
     it 'URL with integers' do
