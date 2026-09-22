@@ -78,16 +78,16 @@ describe ProblemsController, type: 'controller' do
     end
   end
 
-  describe "GET /problems - previously all" do
-    it "gets a paginated list of all problems" do
-      sign_in Fabricate(:user)
-      app = Fabricate(:app)
-      problems = []
-      3.times { problems << Fabricate(:problem, app: app) }
-      3.times { problems << Fabricate(:problem, app: app, resolved: true) }
-      problems.each(&:reload)
+  describe "GET /problems with all_errs" do
+    it "includes resolved problems in latest-notice order" do
+      sign_in user
+      resolved_problem = Fabricate(:problem, app: app, resolved: true)
+      Fabricate(:notice, problem: problem, created_at: 2.days.ago)
+      Fabricate(:notice, problem: resolved_problem, created_at: 1.day.ago)
+
       get :index, params: { all_errs: true }
-      expect(controller.problems).to(eq(problems.reverse))
+
+      expect(controller.problems.map(&:id)).to(eq([resolved_problem.id, problem.id]))
     end
   end
 

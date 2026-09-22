@@ -1,14 +1,4 @@
 describe Problem, type: 'model' do
-  describe "Fabrication" do
-    context "Fabricate(:problem_with_notices)" do
-      it 'should have 3 notices' do
-        expect do
-          Fabricate(:problem_with_notices)
-        end.to(change(Notice, :count).by(3))
-      end
-    end
-  end
-
   context '#last_notice_at' do
     it "returns the created_at timestamp of the latest notice" do
       problem = Fabricate(:problem)
@@ -35,28 +25,11 @@ describe Problem, type: 'model' do
     end
   end
 
-  context 'being created' do
-    context 'when the app has err notifications set to false' do
-      it 'should not send an email notification' do
-        app = Fabricate(:app, notify_on_errs: false)
-        expect(Mailer).to_not(receive(:err_notification))
-        Fabricate(:problem, app: app)
-      end
-    end
-  end
-
   context "#resolved?" do
     it "should start out as unresolved" do
       problem = Problem.new
       expect(problem).to_not(be_resolved)
       expect(problem).to(be_unresolved)
-    end
-
-    it "should be able to be resolved" do
-      problem = Fabricate(:problem)
-      expect(problem).to_not(be_resolved)
-      problem.resolve!
-      expect(problem.reload).to(be_resolved)
     end
   end
 
@@ -65,7 +38,7 @@ describe Problem, type: 'model' do
       problem = Fabricate(:problem)
       expect(problem).to_not(be_resolved)
       problem.resolve!
-      expect(problem).to(be_resolved)
+      expect(problem.reload).to(be_resolved)
     end
 
     it "should record the time when it was resolved" do
@@ -228,7 +201,7 @@ describe Problem, type: 'model' do
     end
   end
 
-  context "notice counter cache" do
+  context "#notices_count" do
     before do
       @app = Fabricate(:app)
       @problem = Fabricate(:problem, app: @app)

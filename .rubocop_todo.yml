@@ -96,7 +96,6 @@ Layout/SpaceAroundOperators:
 # Offense count: 4
 Lint/AmbiguousBlockAssociation:
   Exclude:
-    - "spec/acceptance/app_regenerate_api_key_spec.rb"
     - "spec/controllers/apps_controller_spec.rb"
     - "spec/interactors/resolved_problem_clearer_spec.rb"
 
@@ -142,7 +141,6 @@ Rails/ActiveRecordAliases:
     - "spec/controllers/apps_controller_spec.rb"
     - "spec/interactors/problem_merge_spec.rb"
     - "spec/mailers/mailer_spec.rb"
-    - "spec/models/notice_observer_spec.rb"
     - "spec/models/problem_spec.rb"
 
 # Offense count: 2
@@ -299,7 +297,6 @@ Style/FormatStringToken:
     - "app/helpers/problems_helper.rb"
     - "spec/views/apps/edit.html.haml_spec.rb"
     - "spec/views/problems/show.html.haml_spec.rb"
-    - "spec/views/users/show.html.haml_spec.rb"
 
 # Offense count: 212
 # Cop supports --auto-correct.

@@ -4,12 +4,7 @@ describe ProblemDestroy do
   end
 
   context "in unit way" do
-    let(:problem) do
-      problem = Problem.new
-      allow(problem).to(receive(:id).and_return('problem-id'))
-      allow(problem).to(receive(:delete))
-      problem
-    end
+    let(:problem) { Problem.new }
 
     describe "#execute" do
       it 'destroy the problem himself' do
