@@ -4,10 +4,6 @@ require 'capybara/poltergeist'
 
 Capybara.javascript_driver = :poltergeist
 
- 
-
-def mock_auth(user = "test_user", token = "abcdef"); end
-
 def log_in(user)
   visit '/'
   fill_in :user_email, with: user.email

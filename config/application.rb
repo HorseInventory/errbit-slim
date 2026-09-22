@@ -48,9 +48,6 @@ module Errbit
       g.fixture_replacement :fabrication
     end
 
-    # IssueTracker subclasses use inheritance, so preloading models provides querying consistency in dev mode.
-    config.mongoid.preload_models = true
-
     # Configure Devise mailer to use our mailer layout.
     config.to_prepare { Devise::Mailer.layout 'mailer' }
 

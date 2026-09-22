@@ -34,15 +34,12 @@ end
 
 feature "Create an application" do
   let(:admin) { Fabricate(:admin) }
-  let(:user) do
-    Fabricate(:user, app: app).user
-  end
 
   before do
     admin
   end
 
-  scenario "create an apps without issue tracker and edit it" do
+  scenario "create an app and edit it" do
     visit '/'
     log_in admin
     click_on I18n.t('apps.index.new_app')
@@ -62,7 +59,7 @@ feature "Create an application" do
     expect(App.where(name: 'My new app 2').count).to eq 1
   end
 
-  scenario "create an apps with issue tracker and edit it", js: true do
+  scenario "create an app and edit it with JavaScript", js: true do
     visit '/'
     log_in admin
     click_on I18n.t('apps.index.new_app')
@@ -70,13 +67,11 @@ feature "Create an application" do
 
     click_on I18n.t('apps.new.add_app')
     expect(page.has_content?(I18n.t('controllers.apps.flash.create.success'))).to eql true
-    app = App.where(name: 'My new app').first
 
     click_on I18n.t('shared.navigation.apps')
     click_on 'My new app'
     click_link I18n.t('apps.show.edit')
     click_on I18n.t('apps.edit.update')
     expect(page.has_content?(I18n.t('controllers.apps.flash.update.success'))).to eql true
-    app = App.where(name: 'My new app').first
   end
 end

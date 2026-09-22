@@ -132,6 +132,9 @@ describe ProblemsController, type: 'controller' do
     end
 
     it "should redirect to the standard problems page" do
+      expect(get: problem_path(problem)).to(route_to(
+        controller: 'problems', action: 'show_by_id', id: problem.id.to_s,
+      ))
       get :show_by_id, params: { id: problem.id.to_s }
       expect(response).to(redirect_to(app_problem_path(app, problem.id)))
     end
@@ -229,8 +232,6 @@ describe ProblemsController, type: 'controller' do
       expect(response).to(redirect_to(problems_path))
     end
   end
-
-  # Issue tracker actions were removed from the application. Corresponding specs deleted.
 
   describe "Bulk Actions" do
     before(:each) do

@@ -13,15 +13,6 @@ class Backtrace
   before_validation :ensure_fingerprint
   validates :lines, :fingerprint, presence: true
 
-  def self.find_or_create(lines)
-    fingerprint = generate_fingerprint(lines)
-
-    where(fingerprint: fingerprint).find_one_and_update(
-      { '$setOnInsert' => { fingerprint: fingerprint, lines: lines } },
-      return_document: :after,
-      upsert: true)
-  end
-
   def self.find_or_build(lines)
     fingerprint = generate_fingerprint(lines)
 
@@ -41,11 +32,5 @@ class Backtrace
 
   def self.generate_fingerprint(lines)
     Digest::SHA1.hexdigest(lines.map(&:to_s).join)
-  end
-
-private
-
-  def generate_fingerprint
-    self.fingerprint = self.class.generate_fingerprint(lines)
   end
 end

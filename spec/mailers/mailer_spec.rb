@@ -38,7 +38,7 @@ describe Mailer do
     end
 
     let(:app) do
-      a = notice.app
+      a = notice.problem.app
       a.update_attributes(
         asset_host: "http://example.com",
       )

@@ -1,12 +1,6 @@
-# Represents a single Problem. The problem may have been
-# reported as various Errs, but the user has grouped the
-# Errs together as belonging to the same problem.
-
-# . At some point we need to break up this class, but I think it doesn't have to be right now.
 class Problem
   include Mongoid::Document
   include Mongoid::Timestamps
-  include Mongoid::Attributes::Dynamic
 
   field :message
   field :where
@@ -45,7 +39,7 @@ class Problem
   scope :filtered, ->(filter) {
     return all if filter.blank?
 
-    app_names_to_exclude = filter.scan(/-app:(["'])(.+?)\1|-app:([^\s]+)/).map { |q1, q2, noq| q2 || noq }.compact
+    app_names_to_exclude = filter.scan(/-app:(["'])(.+?)\1|-app:([^\s]+)/).map { |_quote, quoted_name, unquoted_name| quoted_name || unquoted_name }.compact
     return all if app_names_to_exclude.blank?
 
     excluded_ids = App.where(:name.in => app_names_to_exclude).pluck(:id)
@@ -110,10 +104,6 @@ class Problem
 
   def unresolved?
     !resolved?
-  end
-
-  def app_name
-    app&.name
   end
 
   delegate :count, to: :notices, prefix: true

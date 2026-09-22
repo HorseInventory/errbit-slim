@@ -3,7 +3,7 @@ Rails.application.routes.draw do
 
   resources :users
 
-  resources :problems, only: [:index, :show] do
+  resources :problems, only: [:index] do
     collection do
       post :destroy_several
       post :resolve_several
@@ -13,18 +13,16 @@ Rails.application.routes.draw do
     end
     resources :notices, only: [:index]
   end
-  get 'problems/:id' => 'problems#show_by_id'
+  get 'problems/:id' => 'problems#show_by_id', as: :problem
 
   resources :apps do
-    resources :problems do
+    resources :problems, only: [:index, :show, :destroy] do
       collection do
         post :destroy_all
       end
 
       member do
         put :resolve
-        put :unresolve
-        delete :destroy
       end
     end
 

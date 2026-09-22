@@ -181,8 +181,4 @@ module PatternMatching
 
     message[1..-2]
   end
-
-  def self.quoted_string_pattern_omit_others
-    /"(?:(?!<[A-Z_]+>)[^"])*"|'(?:(?!<[A-Z_]+>)[^'])*'|"<[A-Z_]+>"|'<[A-Z_]+>'/
-  end
 end

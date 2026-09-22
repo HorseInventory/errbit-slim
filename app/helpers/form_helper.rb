@@ -11,8 +11,4 @@ module FormHelper
       end
     end
   end
-
-  def label_for_attr(builder, field)
-    (builder.object_name + field).gsub(/[\[\]]/, '_').squeeze('_')
-  end
 end
