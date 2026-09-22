@@ -230,16 +230,6 @@ describe UsersController, type: 'controller' do
           end
         end
       end
-
-      context "with current user admin" do
-        it 'have admin field'
-        context "with password and password_confirmation empty?" do
-          it 'not have password and password_confirmation field'
-        end
-        context "on his own user" do
-          it 'not have admin field'
-        end
-      end
     end
   end
 end

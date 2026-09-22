@@ -29,13 +29,16 @@ require 'sucker_punch/testing/inline'
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
-Mongoid::Config.truncate!
-Mongoid::Tasks::Database.create_indexes
 ActionMailer::Base.delivery_method = :test
 
 RSpec.configure do |config|
   config.include(Devise::Test::ControllerHelpers, type: :controller)
   config.include(Mongoid::Matchers, type: :model)
+
+  config.before(:suite) do
+    Rails.application.eager_load!
+    Mongoid::Tasks::Database.create_indexes
+  end
 
   config.before(:each) do
     Mongoid::Config.truncate!

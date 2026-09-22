@@ -42,8 +42,6 @@ describe ErrorReport do
   let!(:user) { Fabricate(:user) }
   let(:error_report) { ErrorReport.new(notice_attrs) }
 
-  before { user }
-
   describe "#app" do
     it 'find the good app' do
       expect(error_report.app).to(eq(app))
@@ -92,7 +90,7 @@ describe ErrorReport do
     end
   end
 
-  describe '#cache_attributes_on_problem' do
+  describe 'problem updates when generating a notice' do
     it 'sets the latest notice properties on the problem' do
       error_report.generate_notice!
       problem = error_report.problem.reload
@@ -146,10 +144,9 @@ describe ErrorReport do
     end.from(true).to(false))
   end
 
-  context "with notification service configured" do
+  describe "email notifications", type: :mailer do
     before do
-      app.notify_on_errs = true
-      app.save
+      app.update!(notify_on_errs: true)
     end
 
     it 'send email' do
@@ -159,8 +156,19 @@ describe ErrorReport do
       expect(email.subject).to(include(notice.message.truncate(50)))
     end
 
-    context 'when email_at_notices config is specified', type: :mailer do
+    context 'when notifications are disabled' do
+      before { app.update!(notify_on_errs: false) }
+
+      it 'does not send email when a notice arrives' do
+        expect do
+          error_report.generate_notice!
+        end.not_to(change(ActionMailer::Base.deliveries, :size))
+      end
+    end
+
+    context 'with global email thresholds' do
       before do
+        allow(Errbit::Config).to(receive(:per_app_email_at_notices).and_return(false))
         allow(Errbit::Config).to(receive(:email_at_notices).and_return(email_at_notices))
       end
 
@@ -168,7 +176,7 @@ describe ErrorReport do
         let(:email_at_notices) { [0] }
 
         it "sends email on 1st occurrence" do
-          1.times { described_class.new(notice_attrs).generate_notice! }
+          described_class.new(notice_attrs).generate_notice!
           expect(ActionMailer::Base.deliveries.length).to(eq(1))
         end
 
@@ -187,7 +195,7 @@ describe ErrorReport do
         let(:email_at_notices) { [1, 3] }
 
         it "sends email on 1st occurrence" do
-          1.times { described_class.new(notice_attrs).generate_notice! }
+          described_class.new(notice_attrs).generate_notice!
           expect(ActionMailer::Base.deliveries.length).to(eq(1))
         end
 
@@ -201,13 +209,37 @@ describe ErrorReport do
           expect(ActionMailer::Base.deliveries.length).to(eq(2))
         end
 
-        it "sends email on all occurrences when problem was resolved" do
-          3.times do
-            notice = described_class.new(notice_attrs).generate_notice!
-            notice.problem.resolve!
-          end
-          # With simplified behavior, resolution triggers an email on the next occurrence only
-          expect(ActionMailer::Base.deliveries.length).to(eq(2))
+        it "applies thresholds to retained notices after resolution" do
+          3.times { described_class.new(notice_attrs).generate_notice! }
+          app.problems.first.resolve!
+
+          expect do
+            described_class.new(notice_attrs).generate_notice!
+          end.not_to(change(ActionMailer::Base.deliveries, :size))
+
+          expect do
+            described_class.new(notice_attrs).generate_notice!
+          end.to(change(ActionMailer::Base.deliveries, :size).by(1))
+        end
+      end
+    end
+
+    context 'with email thresholds configured per app' do
+      custom_thresholds = [2, 4, 8, 16, 32, 64]
+
+      before do
+        allow(Errbit::Config).to(receive(:per_app_email_at_notices).and_return(true))
+        app.update!(email_at_notices: custom_thresholds)
+        error_report.generate_notice!
+      end
+
+      custom_thresholds.each do |threshold|
+        it "sends email after #{threshold} notices" do
+          (threshold - 2).times { Fabricate(:notice, problem: error_report.problem) }
+
+          expect do
+            described_class.new(notice_attrs).generate_notice!
+          end.to(change(ActionMailer::Base.deliveries, :size).by(1))
         end
       end
     end

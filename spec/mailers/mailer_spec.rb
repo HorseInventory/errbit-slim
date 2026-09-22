@@ -44,16 +44,12 @@ describe Mailer do
       )
       a
     end
-    let(:problem) do
-      notice.problem
-    end
     let!(:user) { Fabricate(:admin) }
     let(:error_report) do
       instance_double(
         'ErrorReport',
-        notice:  notice,
-        app:     app,
-        problem: problem,
+        notice: notice,
+        app:    app,
       )
     end
     let(:email) do
