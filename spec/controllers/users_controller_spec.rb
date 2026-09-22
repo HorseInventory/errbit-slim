@@ -187,14 +187,12 @@ describe UsersController, type: 'controller' do
 
     context "DELETE /users/:id" do
       context "with a destroy success" do
-        let(:user_destroy) { double(destroy: true) }
-
         before do
-          expect(UserDestroy).to receive(:new).with(user).and_return(user_destroy)
           delete :destroy, params: { id: user.id }
         end
 
         it 'should destroy user' do
+          expect(User.where(id: user.id)).to be_empty
           expect(request.flash[:success]).to eq I18n.t('controllers.users.flash.destroy.success', name: user.name)
           expect(response).to redirect_to(users_path)
         end
@@ -202,11 +200,11 @@ describe UsersController, type: 'controller' do
 
       context "with trying destroy himself" do
         before do
-          expect(UserDestroy).to_not receive(:new)
           delete :destroy, params: { id: admin.id }
         end
 
         it 'should not destroy user' do
+          expect(User.where(id: admin.id)).to exist
           expect(response).to redirect_to(users_path)
           expect(request.flash[:error]).to eq I18n.t('controllers.users.flash.destroy.error')
         end

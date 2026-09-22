@@ -1,6 +1,4 @@
 describe Problem, type: 'model' do
-  # validation on environment removed; environment is computed from latest notice
-
   describe "Fabrication" do
     context "Fabricate(:problem_with_notices)" do
       it 'should have 3 notices' do
@@ -291,24 +289,6 @@ describe Problem, type: 'model' do
       expect(filtered_results).to(include(@problem1))
       expect(filtered_results).to(include(@problem2))
       expect(filtered_results).to(include(@problem3))
-    end
-  end
-
-  context "#app_name" do
-    let!(:app) { Fabricate(:app) }
-    let!(:problem) { Fabricate(:problem, app: app) }
-
-    before { app.reload }
-
-    it "is set when a problem is created" do
-      assert_equal app.name, problem.app_name
-    end
-
-    it "is updated when an app is updated" do
-      expect do
-        app.update_attributes!(name: "Bar App")
-        problem.reload
-      end.to(change(problem, :app_name).to("Bar App"))
     end
   end
 

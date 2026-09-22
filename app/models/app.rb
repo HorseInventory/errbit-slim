@@ -12,8 +12,6 @@ class App
   field :notify_on_errs, type: Boolean, default: true
   field :email_at_notices, type: Array, default: Errbit::Config.email_at_notices
 
-  # Some legacy apps may have string as key instead of BSON::ObjectID
-  # identity :type => String
   field :_id,
     type:          String,
     pre_processed: true,
@@ -22,7 +20,6 @@ class App
   has_many :problems, inverse_of: :app, dependent: :destroy
 
   before_validation :generate_api_key, on: :create
-  after_update :store_cached_attributes_on_problems
 
   validates :name, :api_key, presence: true, uniqueness: { allow_blank: true }
 
@@ -83,7 +80,6 @@ class App
     (copy_app.fields.keys - ['_id', 'name', 'created_at', 'updated_at']).each do |k|
       send("#{k}=", copy_app.send(k))
     end
-    # Clone the embedded objects that can be changed via apps/edit (ignore errs, etc.)
   end
 
   def unresolved_count
@@ -110,12 +106,6 @@ class App
   end
 
 private
-
-  def store_cached_attributes_on_problems
-    Problem.where(app_id: id).update_all(
-      app_name: name,
-    )
-  end
 
   def generate_api_key
     self.api_key ||= SecureRandom.hex

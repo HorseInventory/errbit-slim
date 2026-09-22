@@ -13,14 +13,12 @@ gem 'decent_exposure'
 gem 'devise'
 gem 'dotenv-rails'
 gem 'draper'
-gem 'errbit_plugin'
 gem 'font-awesome-rails'
 gem 'haml'
 gem 'htmlentities'
 gem 'kaminari'
 gem 'kaminari-mongoid'
 gem 'mongoid'
-gem 'rack-ssl', require: 'rack/ssl' # force SSL
 gem 'rack-ssl-enforcer', require: false
 gem 'rinku'
 gem 'useragent'
@@ -33,7 +31,6 @@ gem 'net-pop'
 gem 'net-imap'
 
 group :development, :test do
-  gem 'airbrake', require: false
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rails', require: false
@@ -71,11 +68,10 @@ group :no_docker, :test, :development do
 end
 
 gem 'puma'
-gem 'sass-rails'
+gem 'sprockets-rails'
 gem 'uglifier'
 gem 'jquery-rails'
 gem 'pjax_rails'
-gem 'underscore-rails'
 
 gem 'sucker_punch'
 

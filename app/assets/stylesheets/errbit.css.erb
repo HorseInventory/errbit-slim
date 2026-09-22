@@ -10,11 +10,8 @@ body {
 }
 
 /* Convenience Classes */
-.float-left   { float: left; }
 .float-right  { float: right; }
 .clear        { clear: both; }
-.clear-left   { clear: left; }
-.clear-right  { clear: right; }
 .nowrap       { white-space: nowrap; }
 
 /* Headings */
@@ -33,7 +30,6 @@ p { margin-bottom: 1em; }
 a         { color: #0069cc; text-decoration: none;}
 a:visited { color: #0069cc;}
 a:hover   { color: #0069cc; text-decoration: underline; }
-a.action  { float: right; font-size: 0.9em;}
 
 #header > div, #content-wrapper, #footer {
   margin: 0 auto;
@@ -234,14 +230,6 @@ a.action  { float: right; font-size: 0.9em;}
   margin-right: 5px;
 }
 
-#action-bar span a.issue-tracker-button {
-  padding-left: 5px;
-}
-
-#action-bar span a.issue-tracker-button img {
-  padding-left: 10px;
-}
-
 /* Content */
 #content {
   padding: 20px; border-top: 1px solid #C6C6C6;
@@ -307,7 +295,6 @@ form label {
   font-weight: bold; text-transform: uppercase; line-height: 1.6em;
   display: inline-block;
 }
-form label.inline { display: inline; }
 form .checkbox label { display: inline; }
 form .required label:after { font-family: FontAwesome; content: "\f069"; color: #cc0033; margin-left: 5px; font-weight: normal; }
 form .field_with_errors label { color: #900; }
@@ -316,14 +303,7 @@ form input[type=text], form input[type=password], form input[type=email] {
   font-size: 1em;
   color: #787878; border: 1px solid #C6C6C6;
 }
-form textarea {
-  width: 100%; padding: 0.8em;
-  font-size: inherit; font-family: inherit;
-  color: #787878; border: 1px solid #C6C6C6;
-}
-form textarea.short { height: 8em; }
-form textarea.supershort { height: 4em; }
-form input[type=text]:focus, form input[type=password]:focus, form input[type=email]:focus, form textarea:focus {
+form input[type=text]:focus, form input[type=password]:focus, form input[type=email]:focus {
   box-shadow: 0px 0px 4px #69C;
   -moz-box-shadow: 0px 0px 4px #69C;
   -webkit-box-shadow: 0px 0px 4px #69C
@@ -375,24 +355,6 @@ form div.buttons input, form div.buttons button {
   margin-right: 8px;
 }
 
-form strong.option {
-  display: block;
-  margin: 0.7em 0;
-  color: #999;
-}
-
-form .nested {
-  border-top: 1px dotted #BBB;
-  margin-top: 1.5em;
-  padding-top: 1.5em;
-}
-
-form legend + .nested {
-  border: none;
-  margin-top: 0;
-  padding-top: 0;
-}
-
 form .error-messages {
   padding: 13px;
   background: #fcc;
@@ -416,7 +378,6 @@ form input#app_email_at_notices {
   width: 130px;
   margin: 0 5px;
 }
-
 
 /* Tables */
 table {
@@ -463,15 +424,6 @@ pre {
   font-size: 1.1em;
 }
 
-/* HTML Styling */
-.html { padding-left: 1em; border-left: 2px solid #C6C6C6;}
-.html h1, .html h2, .html h3, .html h4, .html h5, .html h6 {
-  border: none;
-}
-.html ul, .html ol  { margin-left: 2em; margin-bottom: 1em; }
-.html ul li   { margin-bottom: 0.5em; list-style: disc; }
-.html ol li   { margin-bottom: 0.5em; list-style: decimal; }
-
 /* Pagination */
 .pagination {
   margin: 0 0 25px;
@@ -482,7 +434,6 @@ pre {
   font-style: normal;
   font-weight: bold;
 }
-
 
 /* Buttons */
 input[type="submit"].button,
@@ -515,7 +466,6 @@ a.button.active {
   background-image: none;
 }
 
-
 /* Tab Bar */
 .tab-bar {
   margin-top: 12px;
@@ -546,21 +496,6 @@ a.button.active {
   display: inline-block;
 }
 
-div.nested .chosen {
-  display: block !important;
-}
-div.nested .choose {
-  margin-bottom: 0.5em;
-}
-
-.button-icon {
-  float: left;
-  margin: 5px 0 0 6px;
-}
-
-/* Icons need to be preloaded, otherwise it looks bad */
-.image_preloader { display: none; }
-
 /* Apps Table */
 table.apps tbody tr:hover td ,table.errs tbody tr:hover td { background-color: #F2F2F2;}
 
@@ -568,10 +503,6 @@ table.apps td.name { width: 100%; }
 table.apps td { padding: 16px 20px; }
 table.apps th { padding: 10px 20px; }
 
-td.message .line {
-  display:inline-block;
-  margin-left:1em;
-}
 td.latest {
   white-space: nowrap;
 }
@@ -646,28 +577,6 @@ table.errs tr.resolved td > * {
   -webkit-opacity: 0.5;
 }
 
-/* Tally tables */
-table.tally {
-  border:none;
-}
-table.tally td,
-table.tally th {
-  border:none !important;
-  background:none !important;
-  padding:8px 0 0;
-}
-table.tally tbody tr:first-child td,
-table.tally tbody tr:first-child th {
-  padding-top:0;
-}
-table.tally td.percent {
-  padding-right: 10px;
-}
-table.tally th.value {
-  width: 100%;
-  text-transform: none;
-}
-
 /* Resolve Errs */
 #action-bar .resolve:before {
   font-family: FontAwesome;
@@ -698,7 +607,6 @@ table.tally th.value {
 .notice-pagination-loader img {
   vertical-align: middle
 }
-
 
 /* Backtrace */
 .window {
@@ -734,14 +642,6 @@ table.backtrace td, table.backtrace th {
 table.backtrace tr:nth-child(2n+1) td { background-color: #222; }
 table.backtrace tr:first-child td { border-top: 0; }
 
-table.backtrace th.line-numbers {
-  border-bottom: 1px solid #F0F0F0;
-  font-size: 13px;
-  text-align: right;
-  vertical-align: top;
-  padding: 1px 6px 1px 7px;
-}
-
 table.backtrace td.line {
   font-size: 13px;
   padding: 2px 8px;
@@ -771,9 +671,6 @@ table.backtrace td.line.in-app a:hover { color: #21B4FF; }
 table.backtrace td.line.in-app a .file { color: #31C4FF; }
 
 /* External backtrace classes and separators */
-table.backtrace tr.hidden_external_backtrace {
-  display: none;
-}
 table.backtrace td.backtrace_separator span {
   cursor: pointer;
   display: inline-block;
@@ -789,31 +686,8 @@ table.backtrace td.backtrace_separator span:hover {
   border: 1px solid #777777;
 }
 
-
-
-/* Extra empty rows at top and bottom of table */
-table.backtrace tr.padding th, table.backtrace tr.padding td {
-  height: 10px;
-  margin: 0;
-  padding: 0;
-}
-
-h3#repository_toggle {
-  cursor: pointer;
-}
-
-span.click_span {
-  font-size: 0.7em;
-}
-
-#repository_div {
-  display: none;
-}
-
-
 .current.asc:after { content: ' ↑'; }
 .current.desc:after { content: ' ↓'; }
-
 
 table.users td {
   vertical-align: middle;
@@ -839,7 +713,4 @@ table.users td img.gravatar {
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 150px;
-}
-.rule-text-area {
-    width: 96%;
 }

@@ -113,28 +113,6 @@ describe Notice, type: 'model' do
     end
   end
 
-  describe "host" do
-    it "returns host if url is valid" do
-      notice = Fabricate.build(:notice, request: { 'url' => "http://example.com/resource/12" })
-      expect(notice.host).to(eq('example.com'))
-    end
-
-    it "returns 'N/A' when url is not valid" do
-      notice = Fabricate.build(:notice, request: { 'url' => "file:///path/to/some/resource/12" })
-      expect(notice.host).to(eq('N/A'))
-    end
-
-    it "returns 'N/A' when url is not valid" do
-      notice = Fabricate.build(:notice, request: { 'url' => "some string" })
-      expect(notice.host).to(eq('N/A'))
-    end
-
-    it "returns 'N/A' when url is empty" do
-      notice = Fabricate.build(:notice, request: {})
-      expect(notice.host).to(eq('N/A'))
-    end
-  end
-
   describe "request" do
     it "returns empty hash if not set" do
       notice = Notice.new

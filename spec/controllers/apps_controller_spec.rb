@@ -7,12 +7,7 @@ describe AppsController, type: 'controller' do
   let(:user) { Fabricate(:user) }
   let(:app1) { Fabricate(:app) }
   let(:app2) { Fabricate(:app) }
-  let(:app3) { Fabricate(:app) }
   let(:app) { app1 }
-  let(:err) { nil }
-  let(:notice) do
-    Fabricate(:notice, problem: problem)
-  end
   let(:problem) do
     Fabricate(:problem, app: app)
   end
@@ -22,7 +17,7 @@ describe AppsController, type: 'controller' do
     context 'when logged in as an admin' do
       it 'finds all apps' do
         sign_in admin
-        app1 && app1 && app2
+        app1 && app2
         get :index
         expect(controller.apps.entries).to eq App.all.to_a.sort.entries
       end
@@ -31,7 +26,7 @@ describe AppsController, type: 'controller' do
     context 'when logged in as a regular user' do
       it 'finds all apps' do
         sign_in user
-        app1 && app1 && app2
+        app1 && app2
         get :index
         expect(controller.apps.entries).to eq App.all.to_a.sort.entries
       end

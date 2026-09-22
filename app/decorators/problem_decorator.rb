@@ -1,5 +1,4 @@
 class ProblemDecorator < Draper::Decorator
-  decorates_association :notices
   delegate_all
 
   def link_text

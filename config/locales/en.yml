@@ -30,14 +30,6 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
-  flash:
-    apps:
-      create:
-        success: Great success! Configure your app with the API key below
-      update:
-        success: "Good news everyone! '%{app_name}' was successfully updated."
-      destroy:
-        success: "'%{app_name}' was successfully destroyed."
   n_errs:
     one: "%{count} error"
     other: "%{count} errors"
@@ -47,7 +39,6 @@ en:
     other: "%{count} errors have"
     been_resolved: been resolved
     been_unresolved: been unresolved
-    been_deleted: been deleted
   layouts:
     application:
       title: "Errbit"
@@ -59,7 +50,6 @@ en:
       apps: "Apps"
       errors: "Errors"
       users: "Users"
-      config: "Config"
     session:
       sign_out: "Sign out"
       edit_profile: "Edit profile"
@@ -97,8 +87,6 @@ en:
       signed_up_but_inactive: "You have signed up successfully. However, we could not sign you in because your account is not yet activated."
       signed_up_but_locked: "You have signed up successfully. However, we could not sign you in because your account is locked."
 
-    google_login:
-      domain_unauthorized: "Account's email domain is not authorized for login. Please log in with an account from a trusted domain."
     sessions:
       new:
         sign_in: "Sign in"
@@ -139,8 +127,6 @@ en:
       user: User
       parameters: Parameters
       session: Session
-      ago_by: ago by
-      ago_by_unkown_user: ago by [Unkown User]
       first_notice: First Notice
       last_notice: Last Notice
       environment: Environment
@@ -188,11 +174,8 @@ en:
     confirm_delete: "Permanently delete this app?"
     confirm_destroy_all_problems: "Permanently delete all of this app's errors?"
     index:
-      notify: Notification Service
-      tracker: Tracker
       errors: Errors
       name: Name
-      repository: Repository
       title: Apps
       new_app: Add a New App
       no_apps: "No apps here."
@@ -213,34 +196,19 @@ en:
       regenerate_api_key: "Regenerate API Key"
     show:
       all_errs: all errors
-      all_users_notified: "All users will be notified when something happens."
       api_key: "API Key:"
-      are_you_sure: "Are you sure?"
       edit: edit
-      environment: Environment
       errors: Errors
       errors_caught: "Errors Caught:"
-      message: Message
       no_error_yet: "No errors have been caught yet, make sure you set up your app"
-      repository: Repository
-      revision: Revision
-      show_hide: "(show/hide)"
       unresolved_errs: unresolved errors
-      unwatch: unwatch
-      user_or_email: User or Email
-      watch: watch
-      when: When
-      who: Who
-
     new:
       add_app: "Add App"
       cancel: "cancel"
       title: "Add App"
     edit:
       title: "Edit App"
-      destroy: "destroy application"
       cancel: "cancel"
-      seriously: "Seriously?"
       update: "Update App"
     search:
       search_placeholder: "Search for application"
@@ -253,10 +221,6 @@ en:
       where: Where
       occurred: Occurred
       similar: Similar
-      browser: Browser
-      tenant: Origin
-      graph-2-weeks: Graph (2 weeks)
-      graph-24-hours: Graph (24 hours)
       app_server: App Server
       app_version: App Version
       framework: Framework

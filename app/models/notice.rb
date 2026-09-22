@@ -33,9 +33,6 @@ class Notice
 
   scope :ordered, -> { order_by(:created_at.asc) }
   scope :reverse_ordered, -> { order_by(:created_at.desc) }
-  scope :for_problems, lambda { |problems|
-    where(:problem_id.in => problems.all.map(&:id))
-  }
 
   # Overwrite the default setter to make sure the message length is no larger
   # than the limit we impose.
@@ -87,32 +84,12 @@ class Notice
     super || {}
   end
 
-  def url
-    request['url']
-  end
-
-  def host
-    uri = url && URI.parse(url)
-    return uri.host if uri && uri.host.present?
-
-    UNAVAILABLE
-  rescue URI::InvalidURIError
-    UNAVAILABLE
-  end
-
   def params
     request['params'] || {}
   end
 
   def session
     request['session'] || {}
-  end
-
-  ##
-  # TODO: Move on decorator maybe
-  #
-  def project_root
-    server_environment['project-root'] || '' if server_environment
   end
 
   def app_version
@@ -134,8 +111,6 @@ class Notice
       super
     end
   end
-
-  delegate :app, to: :problem
 
   def deduplicated_message
     PatternMatching.deduplicated_message(message)

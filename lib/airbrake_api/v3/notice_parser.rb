@@ -1,9 +1,7 @@
 module AirbrakeApi
   module V3
     class NoticeParser
-      class ParamsError < StandardError; end
-
-      attr_reader :params, :error
+      attr_reader :params
 
       def initialize(params = {})
         @params = params.is_a?(ActionController::Parameters) ? params.to_unsafe_h : params

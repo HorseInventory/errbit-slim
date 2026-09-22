@@ -1,5 +1,4 @@
 class AppDecorator < Draper::Decorator
-  # issue tracker removed
   delegate_all
 
   def email_at_notices

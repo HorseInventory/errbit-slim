@@ -39,7 +39,7 @@ class UsersController < ApplicationController
     if user == current_user
       flash[:error] = I18n.t('controllers.users.flash.destroy.error')
     else
-      UserDestroy.new(user).destroy
+      user.destroy
       flash[:success] = I18n.t('controllers.users.flash.destroy.success', name: user.name)
     end
     redirect_to(users_path)

@@ -19,11 +19,8 @@ Errbit::Config = Configurator.run(
   email_from:                ['ERRBIT_EMAIL_FROM'],
   email_at_notices:          ['ERRBIT_EMAIL_AT_NOTICES'],
   per_app_email_at_notices:  ['ERRBIT_PER_APP_EMAIL_AT_NOTICES'],
-  notify_at_notices:         ['ERRBIT_NOTIFY_AT_NOTICES'],
-  per_app_notify_at_notices: ['ERRBIT_PER_APP_NOTIFY_AT_NOTICES'],
   log_location:              ['ERRBIT_LOG_LOCATION'],
   log_level:                 ['ERRBIT_LOG_LEVEL'],
-  notice_deprecation_days:   ['ERRBIT_PROBLEM_DESTROY_AFTER_DAYS'],
 
   serve_static_assets:       ['SERVE_STATIC_ASSETS'],
   secret_key_base:           ['SECRET_KEY_BASE'],

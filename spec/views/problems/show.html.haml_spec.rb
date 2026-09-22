@@ -3,6 +3,7 @@ describe "problems/show.html.haml", type: 'view' do
   let(:app) { AppDecorator.new(problem.app) }
 
   before do
+    params[:app_id] = app.id
     allow(view).to(receive(:app).and_return(app))
     allow(view).to(receive(:problem).and_return(problem))
 

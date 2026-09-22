@@ -1,10 +1,4 @@
-# Haml doesn't load routes automatically when called via a rake task.
-# This is only necessary when sending test emails
-require Rails.root.join('config/routes.rb')
-
 class Mailer < ActionMailer::Base
-  helper ApplicationHelper
-
   default :from                      => Errbit::Config.email_from,
     'X-Errbit-Host'            => Errbit::Config.host,
     'X-Mailer'                 => 'Errbit',
@@ -15,9 +9,6 @@ class Mailer < ActionMailer::Base
   def err_notification(error_report)
     @notice   = NoticeDecorator.new(error_report.notice)
     @app      = AppDecorator.new(error_report.app)
-
-    count = error_report.problem.notices_count
-    count = count > 1 ? "(#{count}) " : ""
 
     errbit_headers(
       'App'         => @app.name,

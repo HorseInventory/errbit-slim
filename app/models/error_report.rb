@@ -1,5 +1,3 @@
-include PatternMatching
-
 ##
 # Processes a new error report.
 #

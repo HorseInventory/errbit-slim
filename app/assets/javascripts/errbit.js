@@ -10,8 +10,6 @@ $(function () {
 
     toggleProblemsCheckboxes();
 
-    bindRequiredPasswordMarks();
-
     // On page apps/:app_id/edit
     $("a.copy_config").on("click", function () {
       $("select.choose_other_app").show().focus();
@@ -104,18 +102,12 @@ $(function () {
 
   function activateSelectableRows() {
     $(".selectable tr").click(function (event) {
-      if (!_.include(["A", "INPUT", "BUTTON", "TEXTAREA"], event.target.nodeName)) {
+      if (!["A", "INPUT", "BUTTON", "TEXTAREA"].includes(event.target.nodeName)) {
         var checkbox = $(this).find('input[name="problems[]"]').get(0);
         checkbox.checked = !checkbox.checked;
       }
     });
   }
-
-  function bindRequiredPasswordMarks() {}
-
-  function toggleRequiredPasswordMarks(input) {}
-
-  toggleRequiredPasswordMarks();
 
   function hide_external_backtrace() {
     $("tr.toggle_external_backtrace").hide();
@@ -129,11 +121,6 @@ $(function () {
   $(document).on("click", "td.backtrace_separator span", show_external_backtrace);
   // Hide external backtrace on page load
   hide_external_backtrace();
-
-  $(".head a.show_tail").click(function (e) {
-    $(this).hide().closest(".head_and_tail").find(".tail").show();
-    e.preventDefault();
-  });
 
   init();
 });

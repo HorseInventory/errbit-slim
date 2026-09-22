@@ -4,7 +4,6 @@ class AppsController < ApplicationController
 
   before_action :require_admin!, except: [:index, :show, :search]
   before_action :parse_email_at_notices_or_set_default, only: [:create, :update]
-  # Removed notification service frequencies
 
   expose(:app_scope) do
     params[:search].present? ? App.search(params[:search]) : App.all
@@ -30,10 +29,6 @@ class AppsController < ApplicationController
     pr = pr.in_env(params[:environment]).ordered_by(params_sort, params_order)
 
     sort_and_paginate_problems(pr, params_sort, params_order, params[:page], current_user.per_page)
-  end
-
-  expose(:users) do
-    User.all.sort_by { |u| u.name.downcase }
   end
 
   def index; end

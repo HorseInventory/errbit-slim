@@ -1,5 +1,5 @@
 describe Backtrace, type: 'model' do
-  describe '.find_or_create' do
+  describe '.find_or_build' do
     let(:lines) do
       [
         { 'number' => '123', 'file' => '/some/path/to.rb', 'method' => 'abc' },
@@ -8,18 +8,20 @@ describe Backtrace, type: 'model' do
     end
     let(:fingerprint) { Backtrace.generate_fingerprint(lines) }
 
-    it 'create new backtrace' do
-      backtrace = described_class.find_or_create(lines)
+    it 'builds a new backtrace' do
+      backtrace = described_class.find_or_build(lines)
 
-      expect(backtrace.lines).to eq(lines)
-      expect(backtrace.fingerprint).to eq(fingerprint)
+      expect(backtrace.lines).to(eq(lines))
+      expect(backtrace.fingerprint).to(eq(fingerprint))
+      expect(backtrace).to(be_new_record)
     end
 
-    it 'creates one backtrace for two identical ones' do
-      described_class.find_or_create(lines)
-      described_class.find_or_create(lines)
+    it 'reuses an existing backtrace with the same lines' do
+      backtrace = described_class.find_or_build(lines)
+      backtrace.save!
 
-      expect(Backtrace.where(fingerprint: fingerprint).count).to eq(1)
+      expect(described_class.find_or_build(lines)).to(eq(backtrace))
+      expect(Backtrace.where(fingerprint: fingerprint).count).to(eq(1))
     end
   end
 end
