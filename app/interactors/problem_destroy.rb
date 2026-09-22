@@ -4,13 +4,9 @@ class ProblemDestroy
   end
 
   def execute
-    if @problems.respond_to?(:destroy_all)
-      @problems.destroy_all
-    else
-      @problems.each(&:destroy)
-    end
-
-    # Delete all backtraces that are not associated with any notices
-    Backtrace.where(:id.nin => Notice.pluck(:backtrace_id)).delete_all
+    problem_ids = @problems.pluck(:id)
+    notices = Notice.where(:problem_id.in => problem_ids)
+    NoticeDestroy.new(notices).execute
+    Problem.where(:id.in => problem_ids).delete_all
   end
 end

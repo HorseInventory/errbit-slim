@@ -13,24 +13,33 @@ class Backtrace
   before_validation :ensure_fingerprint
   validates :lines, :fingerprint, presence: true
 
-  def self.find_or_build(lines)
-    fingerprint = generate_fingerprint(lines)
+  class << self
+    def delete_unreferenced(ids)
+      return if ids.empty?
 
-    backtrace = where(fingerprint: fingerprint).first
-
-    unless backtrace
-      backtrace = new(lines: lines)
-      backtrace.ensure_fingerprint
+      referenced_ids = Notice.where(:backtrace_id.in => ids).distinct(:backtrace_id)
+      where(:id.in => ids - referenced_ids).delete_all
     end
 
-    backtrace
+    def find_or_build(lines)
+      fingerprint = generate_fingerprint(lines)
+
+      backtrace = where(fingerprint: fingerprint).first
+
+      unless backtrace
+        backtrace = new(lines: lines)
+        backtrace.ensure_fingerprint
+      end
+
+      backtrace
+    end
+
+    def generate_fingerprint(lines)
+      Digest::SHA1.hexdigest(lines.map(&:to_s).join)
+    end
   end
 
   def ensure_fingerprint
     self.fingerprint ||= self.class.generate_fingerprint(lines)
-  end
-
-  def self.generate_fingerprint(lines)
-    Digest::SHA1.hexdigest(lines.map(&:to_s).join)
   end
 end

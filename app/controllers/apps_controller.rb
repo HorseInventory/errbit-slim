@@ -26,7 +26,7 @@ class AppsController < ApplicationController
   expose(:problems) do
     pr = app.problems
     pr = pr.unresolved unless all_errs
-    pr = pr.in_env(params[:environment]).ordered_by(params_sort, params_order)
+    pr = pr.in_env(params[:environment])
 
     sort_and_paginate_problems(pr, params_sort, params_order, params[:page], current_user.per_page)
   end
