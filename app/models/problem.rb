@@ -12,7 +12,9 @@ class Problem
   index app_id: 1
 
   belongs_to :app
-  has_many :notices, inverse_of: :problem, dependent: :destroy
+  has_many :notices, inverse_of: :problem, dependent: :delete_all
+
+  around_destroy :remove_unreferenced_backtraces
 
   scope :resolved, -> { where(resolved: true) }
   scope :unresolved, -> { where(resolved: false) }
@@ -26,16 +28,6 @@ class Problem
   }
   scope :all_else_unresolved, ->(fetch_all) { fetch_all ? all : where(resolved: false) }
   scope :in_env, ->(environment) { environment.blank? ? all : where(environment: environment) }
-  scope :ordered_by, ->(sort, order) {
-    case sort
-    when "environment"    then order_by(["environment", order])
-    when "message"        then order_by(["message", order])
-    when "created_at"     then ordered
-    when "last_notice_at", "count" then all # Sorted by ProblemAggregationSorter (DB aggregation)
-    else fail("\"#{sort}\" is not a recognized sort")
-    end
-  }
-
   scope :filtered, ->(filter) {
     return all if filter.blank?
 
@@ -87,8 +79,8 @@ class Problem
   def resolve!
     self.update!(resolved: true, resolved_at: Time.zone.now)
 
-    notice_ids = notices.reverse_ordered.skip(1).pluck(:id)
-    notices.where(:id.in => notice_ids).delete_all
+    latest_id = notices.reverse_ordered.pick(:id)
+    NoticeDestroy.new(notices.where(:id.ne => latest_id)).execute
 
     true
   end
@@ -108,11 +100,37 @@ class Problem
 
   delegate :count, to: :notices, prefix: true
 
+  def compress_notices
+    old_notices = notices.uncompressed.reverse_ordered.skip(Notice::MAX_RECENT_NOTICES)
+    rows = old_notices.pluck(:id, :backtrace_id)
+    return if rows.empty?
+
+    notices.where(:id.in => rows.map(&:first)).update_all(
+      compressed: true,
+      server_environment: {},
+      request: nil,
+      notifier: {},
+      user_attributes: nil,
+      framework: nil,
+      error_class: nil,
+      backtrace_id: nil,
+    )
+    Backtrace.delete_unreferenced(rows.map(&:last).compact.uniq)
+  end
+
   def first_notice_at
-    notices.ordered.first&.created_at
+    notices.ordered.pick(:created_at)
   end
 
   def last_notice_at
-    notices.reverse_ordered.first&.created_at
+    notices.reverse_ordered.pick(:created_at)
+  end
+
+private
+
+  def remove_unreferenced_backtraces
+    backtrace_ids = notices.distinct(:backtrace_id).compact
+    yield
+    Backtrace.delete_unreferenced(backtrace_ids)
   end
 end

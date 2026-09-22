@@ -119,6 +119,32 @@ describe ErrorReport do
     end
   end
 
+  describe '#find_similar_problems' do
+    it 'returns distinct Problems without downloading matching occurrence records' do
+      existing = Fabricate(:problem, app: app)
+      backtrace = Fabricate(:backtrace)
+      5.times { Fabricate(:notice, problem: existing, message: 'Error on line 42', backtrace: backtrace) }
+      other_app_problem = Fabricate(:problem)
+      Fabricate(:notice, problem: other_app_problem, message: 'Error on line 99')
+      incoming = Notice.new(message: 'Error on line 123')
+
+      commands = record_mongo_commands do
+        expect(error_report.find_similar_problems(incoming).to_a).to(eq([existing]))
+      end
+
+      expect(commands.count { |command| command['distinct'] == 'notices' }).to(eq(1))
+      expect(commands.none? { |command| command['find'] == 'notices' }).to(be(true))
+    end
+
+    it 'still matches historical occurrences after compression' do
+      existing = Fabricate(:problem, app: app)
+      old = Fabricate(:notice, problem: existing, message: 'Error on line 42')
+      old.update!(compressed: true)
+
+      expect(error_report.find_similar_problems(Notice.new(message: 'Error on line 99')).to_a).to(eq([existing]))
+    end
+  end
+
   it 'save a notice assigned to a problem' do
     error_report.generate_notice!
     expect(error_report.notice.problem).to(be_a(Problem))

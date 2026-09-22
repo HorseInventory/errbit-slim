@@ -38,8 +38,7 @@ class ProblemsController < ApplicationController
       for_apps(app_scope).
       in_env(params_environment).
       filtered(filter).
-      all_else_unresolved(all_errs).
-      ordered_by(params_sort, params_order)
+      all_else_unresolved(all_errs)
 
     finder = finder.search(params[:search]) if params[:search].present?
 
@@ -66,13 +65,17 @@ class ProblemsController < ApplicationController
   def show
     notice =
       if params[:notice_id]
-        Notice.find(params[:notice_id])
+        problem.object.notices.find(params[:notice_id])
       else
-        @notices = problem.object.notices.reverse_ordered.page(params[:notice]).per(1)
+        @notices = paginate_notices(problem.object.notices, params[:notice], 1)
         @notices.first
       end
     @notice = notice ? NoticeDecorator.new(notice) : nil
-    @all_notices = problem.object.notices.reverse_ordered.page(params[:page]).per(50)
+    @all_notices = paginate_notices(
+      problem.object.notices.only(:created_at, :error_class, :message, :problem_id, 'request.component', 'request.action'),
+      params[:page],
+      50,
+    )
 
     respond_to do |format|
       format.html
@@ -94,7 +97,7 @@ class ProblemsController < ApplicationController
   end
 
   def destroy
-    ProblemDestroy.new([problem]).execute
+    ProblemDestroy.new(app.problems.where(id: problem.id)).execute
 
     flash[:success] = t('.the_error_has_been_deleted')
 
@@ -153,6 +156,11 @@ class ProblemsController < ApplicationController
   end
 
 private
+
+  def paginate_notices(notices, page, per_page)
+    rows = notices.reverse_ordered.page(page).per(per_page).to_a
+    Kaminari.paginate_array(rows, total_count: problem.notices_count).page(page).per(per_page)
+  end
 
   def need_selected_problem
     return if err_ids.any?

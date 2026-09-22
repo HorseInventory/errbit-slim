@@ -12,7 +12,7 @@
           %td= notice.created_at.strftime('%B %d, %Y %H:%M:%S')
           %td= notice.error_class
           %td= notice.where
-          %td= link_to notice.message, app_problem_path(notice.problem.app, notice.problem, notice_id: notice.id), class: 'nowrap', title: notice.problem.message
+          %td= link_to notice.message, app_problem_path(app, problem, notice_id: notice.id), class: 'nowrap', title: problem.message
 
 .pagination
   = paginate notices, remote: true

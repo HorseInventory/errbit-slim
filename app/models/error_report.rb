@@ -13,8 +13,6 @@
 # * <tt>:notifier</tt> - information to identify the source of the error report
 #
 class ErrorReport
-  MAX_RECENT_NOTICES = 100
-
   attr_reader :app
 
   attr_reader :notice
@@ -44,7 +42,7 @@ class ErrorReport
     @problem.save!
     @notice.save!
 
-    compress_old_notices
+    problem.compress_notices
 
     email_notification
     @notice
@@ -107,7 +105,7 @@ class ErrorReport
   def find_similar_problems(notice)
     problem_ids = Notice.where(
       message: /\A#{PatternMatching.text_to_regex_string(notice.message)}\z/i,
-    ).pluck(:problem_id)
+    ).distinct(:problem_id)
 
     return [] if problem_ids.empty?
 
@@ -118,34 +116,6 @@ class ErrorReport
   end
 
 private
-
-  # Our DB size is limited, so we need to compress / trim old notices to keep the DB size down.
-  # Basically just delete a bunch of the extra likely-duplicate notices and backtraces
-  def compress_old_notices
-    if notices_count > MAX_RECENT_NOTICES
-      # Get notices to keep (MAX_RECENT_NOTICES most recent)
-      notices_to_delete = problem.notices.reverse_ordered.skip(MAX_RECENT_NOTICES).only(:id, :backtrace_id)
-      notice_ids_to_delete = notices_to_delete.pluck(:id)
-
-      # "compress" notices not in our keep list
-      problem.notices.where(:id.in => notice_ids_to_delete).update_all(
-        server_environment: {},
-        request: nil,
-        notifier: {},
-        user_attributes: nil,
-        framework: nil,
-        error_class: nil,
-      )
-
-      # And delete backtraces
-      backtrace_ids_to_delete = notices_to_delete.pluck(:backtrace_id)
-      Backtrace.where(:id.in => backtrace_ids_to_delete).delete_all
-
-      notices_count - MAX_RECENT_NOTICES
-    else
-      0
-    end
-  end
 
   def notices_count
     @notices_count ||= problem.notices_count

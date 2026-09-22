@@ -5,20 +5,21 @@ class ProblemDecorator < Draper::Decorator
     object.message.presence || object.error_class
   end
 
-  # When present (Problem list after aggregation), avoids N+1 queries on notices.
   def notices_count
-    if context.key?(:notices_count)
-      context[:notices_count]
-    else
-      object.notices_count
-    end
+    notice_statistics.fetch('notices_count')
+  end
+
+  def first_notice_at
+    notice_statistics.fetch('first_notice_at')&.in_time_zone
   end
 
   def last_notice_at
-    if context.key?(:last_notice_at)
-      context[:last_notice_at]
-    else
-      object.last_notice_at
-    end
+    notice_statistics.fetch('last_notice_at')&.in_time_zone
+  end
+
+private
+
+  def notice_statistics
+    context[:notice_statistics] ||= object.notices.statistics
   end
 end

@@ -21,7 +21,7 @@
         
         %th= t('.resolve')
     %tbody
-      - problems_for_table(problems).each do |problem|
+      - problems.each do |problem|
         %tr{:class => problem.resolved? ? 'resolved' : 'unresolved'}
           %td.select.narrow-as-possible
             %div.td-container

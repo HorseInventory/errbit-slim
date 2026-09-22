@@ -2,6 +2,14 @@ require 'recurse'
 
 class Notice
   UNAVAILABLE = 'N/A'
+  MAX_RECENT_NOTICES = 100
+  EMPTY_STATISTICS = { 'notices_count' => 0, 'first_notice_at' => nil, 'last_notice_at' => nil }.freeze
+  STATISTICS_GROUP = {
+    '_id'             => nil,
+    'notices_count'   => { '$sum' => 1 },
+    'first_notice_at' => { '$min' => '$created_at' },
+    'last_notice_at'  => { '$max' => '$created_at' },
+  }.freeze
 
   # Mongo will not accept index keys larger than 1,024 bytes and that includes
   # some amount of BSON encoding overhead, so keep it under 1,000 bytes to be
@@ -19,6 +27,7 @@ class Notice
   field :framework
   field :error_class
   field :fingerprint
+  field :compressed, type: Boolean, default: false
 
   belongs_to :problem, inverse_of: :notices
   belongs_to :backtrace, index: true, autosave: true, optional: true
@@ -26,13 +35,25 @@ class Notice
   index(created_at: 1)
   index(problem_id: 1, created_at: 1, _id: 1)
   index(fingerprint: 1)
+  index(message: 1, problem_id: 1)
+  index(problem_id: 1, compressed: 1, created_at: 1, _id: 1)
 
   before_validation :ensure_fingerprint
   validates :server_environment, :notifier, :fingerprint, presence: true
   before_save :sanitize
 
-  scope :ordered, -> { order_by(:created_at.asc) }
-  scope :reverse_ordered, -> { order_by(:created_at.desc) }
+  scope :ordered, -> { order_by(created_at: :asc, _id: :asc) }
+  scope :reverse_ordered, -> { order_by(created_at: :desc, _id: :desc) }
+  scope :uncompressed, -> { where(compressed: false) }
+
+  class << self
+    def statistics
+      collection.aggregate([
+        { '$match' => all.selector },
+        { '$group' => STATISTICS_GROUP },
+      ]).first || EMPTY_STATISTICS
+    end
+  end
 
   # Overwrite the default setter to make sure the message length is no larger
   # than the limit we impose.

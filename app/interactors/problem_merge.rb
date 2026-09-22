@@ -14,7 +14,8 @@ class ProblemMerge
       :problem_id.in => child_problems.map(&:id),
     ).update_all(problem_id: merged_problem.id)
 
-    ProblemDestroy.new(child_problems).execute
+    ProblemDestroy.new(Problem.where(:id.in => child_problems.map(&:id))).execute
+    merged_problem.compress_notices
 
     merged_problem
   end

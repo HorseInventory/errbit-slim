@@ -172,6 +172,53 @@ describe ProblemsController, type: 'controller' do
         get :show, params: { app_id: app.id, id: problem.id }
         expect(response).to(be_successful)
       end
+
+      it 'loads only occurrence table fields and calculates statistics once' do
+        problem = Fabricate(:problem, app: app)
+        notice = Fabricate(:notice, problem: problem, request: {
+          'component' => 'orders', 'action' => 'create', 'params' => { 'large' => 'x' * 100_000 },
+        })
+
+        commands = record_mongo_commands do
+          get(:show, params: { app_id: app.id, id: problem.id })
+        end
+
+        expect(response).to(be_successful)
+        table_notice = assigns(:all_notices).first
+        expect(table_notice.request).to(eq('component' => 'orders', 'action' => 'create'))
+        expect(assigns(:notice).request.fetch('params')).to(eq('large' => 'x' * 100_000))
+        expect(response.body).to(include('orders#create', "notice_id=#{notice.id}"))
+        expect(commands.count { |command| command['aggregate'] == 'notices' }).to(eq(1))
+        full_notice_reads = commands.select { |command| command['find'] == 'notices' && !command.key?('projection') }
+        expect(full_notice_reads.size).to(eq(1))
+      end
+
+      it 'paginates the occurrence table without fetching the full occurrence history' do
+        problem = Fabricate(:problem, app: app)
+        backtrace = Fabricate(:backtrace)
+        notices = Array.new(51) { Fabricate(:notice, problem: problem, backtrace: backtrace) }
+
+        get :show, params: { app_id: app.id, id: problem.id, page: 2 }
+
+        expect(assigns(:all_notices).map(&:id)).to(eq([notices.first.id]))
+        expect(assigns(:all_notices).total_count).to(eq(51))
+        expect(assigns(:notices).first.id).to(eq(notices.last.id))
+      end
+
+      it 'renders compressed occurrences in the table and as the selected occurrence' do
+        problem = Fabricate(:problem, app: app)
+        notice = Fabricate(:notice, problem: problem)
+        Notice.collection.find(_id: notice.id).update_one('$set' => {
+          compressed: true, server_environment: {}, request: nil, notifier: {}, error_class: nil, backtrace_id: nil,
+        })
+
+        get :show, params: { app_id: app.id, id: problem.id, notice_id: notice.id }
+
+        expect(response).to(be_successful)
+        expect(assigns(:all_notices).first.where).to(eq(''))
+        expect(assigns(:all_notices).total_count).to(eq(1))
+        expect(assigns(:notice).backtrace).to(be_nil)
+      end
     end
 
     context 'pagination' do
